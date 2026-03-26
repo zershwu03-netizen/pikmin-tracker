@@ -362,13 +362,21 @@
       if (cur && window.state.accounts.includes(cur)) {
         window.state.currentAccount = cur;
       }
-      const _dot = document.getElementById('syncDot');
-      const _txt = document.getElementById('syncText');
-      if (_dot) { _dot.style.background='#3fb950'; _dot.style.boxShadow='0 0 6px #3fb950'; }
-      if (_txt) _txt.textContent='已同步';
+      ['syncDot','syncDot2'].forEach(function(id){
+        const d=document.getElementById(id);
+        if(d){d.style.background='#3fb950';d.style.boxShadow='0 0 6px #3fb950';}
+      });
+      ['syncText','syncText2'].forEach(function(id){
+        const t=document.getElementById(id); if(t) t.textContent='已同步';
+      });
       setTimeout(function(){
-        if (_dot){_dot.style.background='#58a6ff';_dot.style.boxShadow='none';}
-        if (_txt) _txt.textContent='線上';
+        ['syncDot','syncDot2'].forEach(function(id){
+          const d=document.getElementById(id);
+          if(d){d.style.background='#58a6ff';d.style.boxShadow='none';}
+        });
+        ['syncText','syncText2'].forEach(function(id){
+          const t=document.getElementById(id); if(t) t.textContent='線上';
+        });
       }, 1500);
       if (window._appReady) {
         renderAccounts();
@@ -398,10 +406,14 @@
     // 移除載入畫面，啟動 app
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('appRoot').style.display = '';
-    const _d2 = document.getElementById('syncDot');
-    const _t2 = document.getElementById('syncText');
-    if (_d2) { _d2.style.background='#58a6ff'; _d2.style.boxShadow='none'; }
-    if (_t2) _t2.textContent='線上';
+    ['syncDot','syncDot2'].forEach(function(id){
+      const d=document.getElementById(id);
+      if(d){d.style.background='#58a6ff';d.style.boxShadow='none';}
+    });
+    ['syncText','syncText2'].forEach(function(id){
+      const t=document.getElementById(id);
+      if(t) t.textContent='線上';
+    });
     window._appReady = true;
     renderAccounts();
     renderEssence();
@@ -435,13 +447,19 @@
 }
 </style>
 
+<!-- 同步狀態（固定在右上角，appRoot 外，任何時候都可見） -->
+<div id="syncBadge" style="position:fixed;top:12px;right:16px;z-index:10000;display:flex;align-items:center;gap:6px;background:rgba(22,27,34,0.92);border:1px solid #30363d;border-radius:20px;padding:4px 12px;backdrop-filter:blur(8px);font-size:0.75rem;font-weight:700;color:#8b949e;pointer-events:none">
+  <span id="syncDot2" style="width:8px;height:8px;border-radius:50%;background:#d29922;display:inline-block;transition:background 0.4s,box-shadow 0.4s"></span>
+  <span id="syncText2">連線中...</span>
+</div>
+
 <div id="appRoot" style="display:none">
 <header>
   <div class="logo">🌿 <span>皮克敏追蹤器</span></div>
   <div style="display:flex;align-items:center;gap:12px">
     <div id="syncStatus" style="font-size:0.75rem;color:var(--text3);display:flex;align-items:center;gap:5px">
-      <span id="syncDot" style="width:7px;height:7px;border-radius:50%;background:var(--text3);display:inline-block"></span>
-      <span id="syncText">連線中</span>
+      <span id="syncDot" style="width:8px;height:8px;border-radius:50%;background:#d29922;display:inline-block;transition:background 0.4s,box-shadow 0.4s"></span>
+      <span id="syncText" style="font-size:0.75rem;color:var(--text2)">連線中...</span>
     </div>
     <div style="font-size:0.8rem;color:var(--text3)" id="clock"></div>
   </div>
