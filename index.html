@@ -1296,7 +1296,7 @@ function renderEssence() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><input class="cell-input" value="${row.name}" onchange="updateEssenceRow(${i},'name',this.value)" style="min-width:100px"></td>
-      <td class="cell-white"><input class="cell-input essence-numpad" type="text" inputmode="decimal" pattern="[0-9]*" data-row="${i}" data-field="essenceHave"
+      <td class="cell-white"><input class="cell-input essence-numpad" type="text" inputmode="text" pattern="[0-9]*" data-row="${i}" data-field="essenceHave"
         value="${row.essenceHave}" style="min-width:80px;text-align:center"
         onfocus="setTimeout(function(){this.select();}.bind(this),0)"></td>
       <td class="cell-green"><input class="cell-input" type="text" value="${row.essenceLimit}" onchange="updateEssenceRow(${i},'essenceLimit',+this.value)"
@@ -1304,7 +1304,7 @@ function renderEssence() {
       <td class="cell-yellow" style="font-weight:800;min-width:60px">${essenceNeed}</td>
       <td class="cell-green"><input class="cell-input" type="text" value="${row.flowerLimit}" onchange="updateEssenceRow(${i},'flowerLimit',+this.value)"
         style="background:transparent;border-color:#2d5a2d;color:var(--green-text);min-width:80px;text-align:center"></td>
-      <td class="cell-white"><input class="cell-input essence-numpad" type="text" inputmode="decimal" pattern="[0-9]*" data-row="${i}" data-field="flowerHave"
+      <td class="cell-white"><input class="cell-input essence-numpad" type="text" inputmode="text" pattern="[0-9]*" data-row="${i}" data-field="flowerHave"
         value="${row.flowerHave}" style="min-width:80px;text-align:center"
         onfocus="setTimeout(function(){this.select();}.bind(this),0)"></td>
       <td class="cell-yellow" style="min-width:60px">${flowerCanCollect}</td>
@@ -1680,7 +1680,7 @@ function renderDaily() {
             <div style="display:flex;align-items:center;gap:3px">
               <span style="font-size:0.8rem;font-weight:700;color:${f.color}">${f.label}</span>
               <button class="btn-counter" onclick="adjustDaily('${f.key}',-1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">−</button>
-              <input type="text" inputmode="decimal" pattern="[0-9]*" class="cell-input daily-numpad" data-key="${f.key}"
+              <input type="text" inputmode="text" pattern="[0-9]*" class="cell-input daily-numpad" data-key="${f.key}"
                 style="width:56px;text-align:center;font-size:1rem;font-weight:800;color:${f.color};background:transparent;border-color:${f.color}55;padding:4px 4px"
                 value="${rec[f.key]||0}" onfocus="setTimeout(function(){this.select();}.bind(this),0)">
               <button class="btn-counter" onclick="adjustDaily('${f.key}',1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">＋</button>
@@ -1702,7 +1702,7 @@ function renderDaily() {
             <div style="display:flex;align-items:center;gap:3px">
               <span style="font-size:0.8rem;font-weight:700;color:${f.color}">${f.label}</span>
               <button class="btn-counter" onclick="adjustDaily('${f.key}',-1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">−</button>
-              <input type="text" inputmode="decimal" pattern="[0-9]*" class="cell-input daily-numpad" data-key="${f.key}"
+              <input type="text" inputmode="text" pattern="[0-9]*" class="cell-input daily-numpad" data-key="${f.key}"
                 style="width:56px;text-align:center;font-size:1rem;font-weight:800;color:${f.color};background:transparent;border-color:${f.color}55;padding:4px 4px"
                 value="${rec[f.key]||0}" onfocus="setTimeout(function(){this.select();}.bind(this),0)">
               <button class="btn-counter" onclick="adjustDaily('${f.key}',1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">＋</button>
