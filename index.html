@@ -1119,20 +1119,24 @@ function updateClock() {
 }
 
 function autoResetDailyFields(today) {
+  if (!window.state) return;
   const lim = window.state.dailyLimits || { mushCount: 3, raidCount: 1, sensorCount: 1 };
   window.state.accounts.forEach(function(acct) {
     if (!window.state.dailyRecords[acct]) window.state.dailyRecords[acct] = {};
-    // 取前一天最後一筆紀錄（繼承精華/花朵/任務）
+    // 今天已有紀錄就不覆蓋（避免重複觸發）
+    if (window.state.dailyRecords[acct][today]) return;
+    // 繼承前一天的非重置欄位
     const allDates = Object.keys(window.state.dailyRecords[acct]).sort();
     const lastDate = allDates.length > 0 ? allDates[allDates.length - 1] : null;
     const prev = (lastDate && lastDate !== today) ? window.state.dailyRecords[acct][lastDate] : {};
-    // 建立今日紀錄（重置每日欄位，繼承其他欄位）
     window.state.dailyRecords[acct][today] = {
+      // ── 每日重置 ──
       mushCount:    lim.mushCount   !== undefined ? lim.mushCount   : 3,
       raidCount:    lim.raidCount   !== undefined ? lim.raidCount   : 1,
       sensorCount:  lim.sensorCount !== undefined ? lim.sensorCount : 1,
       flowerCoins:  0,
-      flowerDone:   null,
+      flowerDone:   false,
+      // ── 繼承前一天 ──
       essenceWhite:  prev.essenceWhite  || 0,
       essenceYellow: prev.essenceYellow || 0,
       essenceRed:    prev.essenceRed    || 0,
@@ -1147,12 +1151,12 @@ function autoResetDailyFields(today) {
   });
   // 存到雲端
   if (window._fbSave) window._fbSave(window.state);
-  // 更新日期顯示與畫面
+  // 更新畫面
   const td = document.getElementById('todayDate');
   if (td) td.textContent = today;
   if (window._appReady) {
-    if (typeof renderDaily === 'function') renderDaily();
-    if (typeof renderDailyOverview === 'function') renderDailyOverview();
+    if (typeof renderDaily === 'function' && typeof dailyTab !== 'undefined' && dailyTab === 'single') renderDaily();
+    if (typeof renderDailyOverview === 'function' && typeof dailyTab !== 'undefined' && dailyTab === 'overview') renderDailyOverview();
   }
 }
 
