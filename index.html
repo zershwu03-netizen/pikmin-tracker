@@ -7,6 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>🌿 皮克敏追蹤器</title>
+<meta name="app-version" content="202603261515">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap');
 
@@ -327,6 +328,20 @@
   .category-combo-wrap { position: relative; display: flex; gap: 4px; align-items: center; }
   .category-combo-wrap input { min-width: 130px; }
 </style>
+
+<!-- 強制更新：fetch 伺服器比對版本，Safari 快取也能更新 -->
+<script>
+(function(){
+  var CV = document.querySelector('meta[name="app-version"]').content;
+  var url = location.href.split("?")[0] + "?_=" + Date.now();
+  fetch(url,{cache:"no-store"}).then(function(r){return r.text();}).then(function(html){
+    var m = html.match(/name="app-version" content="([^"]+)"/);
+    if(m && m[1] !== CV){
+      location.replace(location.href.split("?")[0] + "?v=" + m[1]);
+    }
+  }).catch(function(){});
+})();
+</script>
 <!-- Firebase SDK -->
 <script type="module">
   // ─── Firebase Init ────────────────────────────────────────
