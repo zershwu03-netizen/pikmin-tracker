@@ -413,7 +413,14 @@
         renderAccounts();
         const tab = getCurrentTab();
         if (tab === 'essence')  renderEssence();
-        if (tab === 'daily')    { renderDaily(); }
+        if (tab === 'daily') {
+          // 如果帳號紀錄有未儲存變更，提示有人更新但不覆蓋
+          if (window._dailyDirty || (typeof _dailyDirty !== 'undefined' && _dailyDirty)) {
+            showRemoteUpdateBanner();
+          } else {
+            renderDaily();
+          }
+        }
         if (tab === 'mushroom') renderMushrooms();
         if (tab === 'flower')   renderFlower();
         checkDefaultBtn();
@@ -575,8 +582,27 @@
 <div class="section" id="tab-daily">
   <div class="section-header">
     <div class="section-title">📅 帳號紀錄</div>
-    <div style="font-size:0.8rem;color:var(--text3)" id="todayDate"></div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div style="font-size:0.8rem;color:var(--text3)" id="todayDate"></div>
+      <button id="dailySaveBtn" onclick="dailySaveToCloud()" style="
+        display:none;
+        background:var(--accent);color:#000;border:none;padding:8px 18px;
+        border-radius:8px;cursor:pointer;font-weight:800;font-family:inherit;
+        font-size:0.88rem;transition:all 0.2s;animation:savePulse 1.2s ease-in-out infinite;
+      ">💾 儲存</button>
+      <button id="dailySaveBtnIdle" onclick="dailySaveToCloud()" style="
+        background:var(--surface2);color:var(--text2);border:1px solid var(--border);
+        padding:8px 18px;border-radius:8px;cursor:pointer;font-weight:700;
+        font-family:inherit;font-size:0.88rem;transition:all 0.2s;
+      ">💾 儲存</button>
+    </div>
   </div>
+  <style>
+    @keyframes savePulse {
+      0%,100%{box-shadow:0 0 0 0 rgba(63,185,80,0.5)}
+      50%{box-shadow:0 0 0 6px rgba(63,185,80,0)}
+    }
+  </style>
   <div class="tabs-inner" style="margin-bottom:16px">
     <div class="tab-inner active" id="dailyTabSingle" onclick="switchDailyTab('single')">👤 個別帳號</div>
     <div class="tab-inner" id="dailyTabOverview" onclick="switchDailyTab('overview')">📊 總覽</div>
@@ -978,6 +1004,46 @@ function save() {
   if (window._fbSave) window._fbSave(window.state);
 }
 
+// 只存本地 state，不推送 Firebase（帳號紀錄用）
+function saveLocal() {
+  try { localStorage.setItem('pikmin_cur_acct', window.state.currentAccount); } catch(e) {}
+  markDailyDirty(true);
+}
+
+// 控制帳號紀錄儲存按鈕狀態
+let _dailyDirty = false;
+function markDailyDirty(dirty) {
+  _dailyDirty = dirty;
+  const btnOn  = document.getElementById('dailySaveBtn');
+  const btnOff = document.getElementById('dailySaveBtnIdle');
+  if (!btnOn || !btnOff) return;
+  if (dirty) {
+    btnOn.style.display  = '';
+    btnOff.style.display = 'none';
+  } else {
+    btnOn.style.display  = 'none';
+    btnOff.style.display = '';
+  }
+}
+
+// 按下儲存按鈕：推送 Firebase
+function dailySaveToCloud() {
+  const btn = document.getElementById('dailySaveBtn');
+  const btnIdle = document.getElementById('dailySaveBtnIdle');
+  if (btn) { btn.textContent = '⏳ 儲存中...'; btn.style.animationName = 'none'; }
+  if (window._fbSave) {
+    window._fbSave(window.state).then(function() {
+      markDailyDirty(false);
+      if (btnIdle) { btnIdle.textContent = '✅ 已儲存'; }
+      setTimeout(function() {
+        if (btnIdle) btnIdle.textContent = '💾 儲存';
+      }, 2000);
+    });
+  } else {
+    markDailyDirty(false);
+  }
+}
+
 // 讓 Firebase 模組可以存取 ensureStateFields
 window.ensureStateFields = ensureStateFields;
 
@@ -996,7 +1062,7 @@ function switchTab(tab) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-  if (tab === 'daily') { renderDaily(); if (dailyTab==='overview') renderDailyOverview(); }
+  if (tab === 'daily') { markDailyDirty(_dailyDirty); renderDaily(); if (dailyTab==='overview') renderDailyOverview(); }
   if (tab === 'mushroom') { renderMushrooms(); renderCategoryDatalist(); }
   if (tab === 'flower') renderFlower();
   if (tab === 'essence') renderEssence();
@@ -1569,7 +1635,7 @@ function saveDailyNumpadSilent(el) {
   if (!key || isNaN(val)) return;
   const rec = getDailyRecord();
   rec[key] = val;
-  save();
+  saveLocal();
 }
 
 document.addEventListener('keydown', function(e) {
@@ -1596,14 +1662,14 @@ document.addEventListener('blur', function(e) {
 function updateDailyLimit(key, val) {
   if (!state.dailyLimits) state.dailyLimits = { mushCount: 3, raidCount: 1, sensorCount: 1 };
   state.dailyLimits[key] = val;
-  save();
+  saveLocal();
 }
 
 function resetDailyCount(key) {
   const lim = (state.dailyLimits && state.dailyLimits[key]) || (key === 'mushCount' ? 3 : 1);
   const rec = getDailyRecord();
   rec[key] = lim;
-  save(); renderDaily();
+  saveLocal(); renderDaily();
 }
 
 function renderDailyHistory() {
@@ -1757,7 +1823,7 @@ function setFlowerCoins(v) {
   const rec = getDailyRecord();
   rec.flowerCoins = v;
   if (v >= 60) rec.flowerDone = true;
-  save(); renderDaily();
+  saveLocal(); renderDaily();
 }
 
 function adjustDaily(key, delta) {
@@ -1765,13 +1831,45 @@ function adjustDaily(key, delta) {
   const newVal = Math.max(0, (rec[key]||0) + delta);
   rec[key] = (key === 'flowerCoins') ? Math.min(60, newVal) : newVal;
   if (key === 'flowerCoins' && rec[key] >= 60) rec.flowerDone = true;
-  save(); renderDaily();
+  saveLocal(); renderDaily();
 }
 function setDaily(key, val) {
   const rec = getDailyRecord();
   rec[key] = val;
   if (key === 'flowerCoins' && +val >= 60) rec.flowerDone = true;
-  save(); renderDaily();
+  saveLocal(); renderDaily();
+}
+
+// 有人更新了帳號紀錄，但本地有未儲存變更時顯示提示
+function showRemoteUpdateBanner() {
+  let banner = document.getElementById('remoteUpdateBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'remoteUpdateBanner';
+    banner.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1c2333;border:1px solid #f0883e;color:#f0883e;padding:10px 20px;border-radius:12px;font-weight:800;font-size:0.85rem;z-index:999;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
+    var closeBtn = document.createElement('button');
+    closeBtn.textContent = '繼續編輯';
+    closeBtn.style.cssText = 'background:transparent;border:1px solid #f0883e;color:#f0883e;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:800;font-family:inherit;font-size:0.82rem';
+    closeBtn.onclick = function() { banner.remove(); };
+    var applyBtn = document.createElement('button');
+    applyBtn.textContent = '放棄變更並套用';
+    applyBtn.style.cssText = 'background:#f0883e;color:#000;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;font-weight:800;font-family:inherit;font-size:0.82rem;margin-left:4px';
+    applyBtn.onclick = applyRemoteAndDiscard;
+    var msg = document.createElement('span');
+    msg.textContent = '⚠️ 有人更新了帳號紀錄！';
+    banner.appendChild(msg);
+    banner.appendChild(applyBtn);
+    banner.appendChild(closeBtn);
+    document.body.appendChild(banner);
+    setTimeout(function() { if (banner.parentNode) banner.remove(); }, 8000);
+  }
+}
+
+function applyRemoteAndDiscard() {
+  const banner = document.getElementById('remoteUpdateBanner');
+  if (banner) banner.remove();
+  markDailyDirty(false);
+  renderDaily();
 }
 
 // ─── 3. Mushrooms ─────────────────────────────────────────
