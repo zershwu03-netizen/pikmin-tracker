@@ -415,7 +415,7 @@
         if (tab === 'essence')  renderEssence();
         if (tab === 'daily') {
           // 如果帳號紀錄有未儲存變更，提示有人更新但不覆蓋
-          if (window._dailyDirty || (typeof _dailyDirty !== 'undefined' && _dailyDirty)) {
+          if (window._dailyDirty) {
             showRemoteUpdateBanner();
           } else {
             renderDaily();
@@ -460,7 +460,21 @@
     const td = document.getElementById('todayDate');
     if (td) td.textContent = getTodayKey();
     // 初始化儲存按鈕狀態
-    if (typeof markDailyDirty === 'function') markDailyDirty(false);
+    if (typeof markGlobalDirty === 'function') markGlobalDirty(false);
+    // 動態修正 sticky top 值
+    var h = document.getElementById('mainHeader');
+    var ab = document.querySelector('.account-bar');
+    var nt = document.querySelector('.nav-tabs');
+    if (h && ab && nt) {
+      var hh = h.offsetHeight;
+      var abh = ab.offsetHeight;
+      var nth = nt.offsetHeight;
+      ab.style.top = hh + 'px';
+      nt.style.top = (hh + abh) + 'px';
+      // daily sticky bar sits right below the nav-tabs
+      var dsb = document.getElementById('dailyStickyBar');
+      if (dsb) dsb.style.top = (hh + abh + nth) + 'px';
+    }
   }).catch(e => {
     console.error('Firebase load error', e);
     document.getElementById('loadingScreen').innerHTML =
@@ -494,7 +508,7 @@
 </div>
 
 <div id="appRoot" style="display:none">
-<header>
+<header id="mainHeader">
   <div class="logo">🌿 <span>皮克敏追蹤器</span></div>
   <div style="display:flex;align-items:center;gap:12px">
     <div id="syncStatus" style="font-size:0.75rem;color:var(--text3);display:flex;align-items:center;gap:5px">
@@ -505,17 +519,22 @@
   </div>
 </header>
 
-<div class="account-bar">
+<div class="account-bar" style="position:sticky;top:57px;z-index:90;">
   <div style="font-size:0.8rem;color:var(--text2);font-weight:700">帳號：</div>
   <div class="account-tabs" id="accountTabs"></div>
   <button class="btn-add-acct" onclick="openAddAccount()">＋ 新增帳號</button>
 </div>
 
-<div class="nav-tabs">
+<div class="nav-tabs" style="position:sticky;top:106px;z-index:89;">
   <div class="nav-tab active" data-tab="essence" onclick="switchTab('essence')">✨ 精華計算</div>
   <div class="nav-tab" data-tab="daily" onclick="switchTab('daily')">📅 帳號紀錄</div>
   <div class="nav-tab" data-tab="mushroom" onclick="switchTab('mushroom')">🍄 菇點紀錄</div>
   <div class="nav-tab" data-tab="flower" onclick="switchTab('flower')">🌸 種花紀錄</div>
+  <div style="flex:1"></div>
+  <div style="display:flex;align-items:center;padding:0 12px;gap:8px">
+    <button id="globalSaveBtnActive" onclick="globalSaveToCloud()" style="display:none;background:var(--accent);color:#000;border:none;padding:6px 16px;border-radius:8px;cursor:pointer;font-weight:800;font-family:inherit;font-size:0.82rem;animation:savePulse 1.2s ease-in-out infinite;white-space:nowrap">💾 儲存</button>
+    <button id="globalSaveBtnIdle" onclick="globalSaveToCloud()" style="display:inline-block;background:var(--surface2);color:var(--text2);border:1px solid var(--border);padding:6px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit;font-size:0.82rem;white-space:nowrap">💾 儲存</button>
+  </div>
 </div>
 
 <main>
@@ -582,22 +601,31 @@
 
 <!-- ══════ 2. 帳號紀錄 ══════ -->
 <div class="section" id="tab-daily">
-  <div class="section-header">
-    <div class="section-title">📅 帳號紀錄</div>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <div style="font-size:0.8rem;color:var(--text3)" id="todayDate"></div>
-      <button id="dailySaveBtn" onclick="dailySaveToCloud()" style="
-        display:none;
-        background:var(--accent);color:#000;border:none;padding:8px 18px;
-        border-radius:8px;cursor:pointer;font-weight:800;font-family:inherit;
-        font-size:0.88rem;transition:all 0.2s;animation:savePulse 1.2s ease-in-out infinite;
-      ">💾 儲存</button>
-      <button id="dailySaveBtnIdle" onclick="dailySaveToCloud()" style="
-        display:inline-block;
-        background:var(--surface2);color:var(--text2);border:1px solid var(--border);
-        padding:8px 18px;border-radius:8px;cursor:pointer;font-weight:700;
-        font-family:inherit;font-size:0.88rem;transition:all 0.2s;
-      ">💾 儲存</button>
+  <!-- 凍結標題列：section header + tabs -->
+  <div id="dailyStickyBar" style="position:sticky;top:0;z-index:80;background:var(--bg);padding-bottom:0;margin-bottom:0">
+    <div class="section-header" style="margin-bottom:0;padding:16px 0 8px 0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="section-title">📅 帳號紀錄</div>
+        <div style="font-size:0.8rem;color:var(--text3)" id="todayDate"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button id="dailySaveBtn" onclick="dailySaveToCloud()" style="
+          display:none;
+          background:var(--accent);color:#000;border:none;padding:6px 16px;
+          border-radius:8px;cursor:pointer;font-weight:800;font-family:inherit;
+          font-size:0.85rem;animation:savePulse 1.2s ease-in-out infinite;
+        ">💾 儲存</button>
+        <button id="dailySaveBtnIdle" onclick="dailySaveToCloud()" style="
+          display:inline-block;
+          background:var(--surface2);color:var(--text2);border:1px solid var(--border);
+          padding:6px 16px;border-radius:8px;cursor:pointer;font-weight:700;
+          font-family:inherit;font-size:0.85rem;
+        ">💾 儲存</button>
+      </div>
+    </div>
+    <div class="tabs-inner" style="margin-bottom:0;padding-bottom:12px;border-bottom:1px solid var(--border)">
+      <div class="tab-inner active" id="dailyTabOverview" onclick="switchDailyTab('overview')">📊 總覽</div>
+      <div class="tab-inner" id="dailyTabSingle" onclick="switchDailyTab('single')">👤 個別帳號</div>
     </div>
   </div>
   <style>
@@ -606,12 +634,8 @@
       50%{box-shadow:0 0 0 6px rgba(63,185,80,0)}
     }
   </style>
-  <div class="tabs-inner" style="margin-bottom:16px">
-    <div class="tab-inner active" id="dailyTabSingle" onclick="switchDailyTab('single')">👤 個別帳號</div>
-    <div class="tab-inner" id="dailyTabOverview" onclick="switchDailyTab('overview')">📊 總覽</div>
-  </div>
-  <div id="dailySingleContent"></div>
-  <div id="dailyOverviewContent" style="display:none"></div>
+  <div id="dailyOverviewContent" style="padding-top:16px"></div>
+  <div id="dailySingleContent" style="display:none;padding-top:16px"></div>
 </div>
 
 <!-- ══════ 3. 菇點紀錄 ══════ -->
@@ -1000,52 +1024,57 @@ function ensureStateFields(s) {
 window.state = ensureStateFields({});
 
 // save() 同時存雲端（Firebase）與本地 currentAccount 偏好
+// 儲存到 Firebase（立即推送，用於菇點/精華/種花等不怕覆蓋的操作）
 function save() {
-  // 記住本人選的帳號（本地偏好，不影響別人）
   try { localStorage.setItem('pikmin_cur_acct', window.state.currentAccount); } catch(e) {}
-  // 推送到 Firebase
   if (window._fbSave) window._fbSave(window.state);
 }
 
-// 只存本地 state，不推送 Firebase（帳號紀錄用）
+// 只存本地，標記有未儲存變更（帳號紀錄用）
 function saveLocal() {
   try { localStorage.setItem('pikmin_cur_acct', window.state.currentAccount); } catch(e) {}
-  markDailyDirty(true);
+  markGlobalDirty(true);
 }
 
-// 控制帳號紀錄儲存按鈕狀態
+// 全域儲存按鈕狀態控制
 let _dailyDirty = false;
-function markDailyDirty(dirty) {
+function markDailyDirty(dirty) { markGlobalDirty(dirty); }  // 向下相容
+
+function markGlobalDirty(dirty) {
   _dailyDirty = dirty;
+  window._dailyDirty = dirty;
+  // 舊版 daily 按鈕（如果存在）
   const btnOn  = document.getElementById('dailySaveBtn');
   const btnOff = document.getElementById('dailySaveBtnIdle');
-  if (!btnOn || !btnOff) return;
-  if (dirty) {
-    btnOn.style.display  = '';
-    btnOff.style.display = 'none';
-  } else {
-    btnOn.style.display  = 'none';
-    btnOff.style.display = '';
-  }
+  // 新版全域按鈕
+  const gOn  = document.getElementById('globalSaveBtnActive');
+  const gOff = document.getElementById('globalSaveBtnIdle');
+  [btnOn, gOn].forEach(function(b) { if (b) b.style.display = dirty ? '' : 'none'; });
+  [btnOff, gOff].forEach(function(b) { if (b) b.style.display = dirty ? 'none' : 'inline-block'; });
 }
 
-// 按下儲存按鈕：推送 Firebase
-function dailySaveToCloud() {
-  const btn = document.getElementById('dailySaveBtn');
-  const btnIdle = document.getElementById('dailySaveBtnIdle');
-  if (btn) { btn.textContent = '⏳ 儲存中...'; btn.style.animationName = 'none'; }
+function globalSaveToCloud() {
+  var gOn  = document.getElementById('globalSaveBtnActive');
+  var gOff = document.getElementById('globalSaveBtnIdle');
+  var dOn  = document.getElementById('dailySaveBtn');
+  var dOff = document.getElementById('dailySaveBtnIdle');
+  [gOn, dOn].forEach(function(b) { if (b) { b.textContent = '⏳ 儲存中...'; b.style.animationName = 'none'; } });
+  try { localStorage.setItem('pikmin_cur_acct', window.state.currentAccount); } catch(e) {}
   if (window._fbSave) {
     window._fbSave(window.state).then(function() {
-      markDailyDirty(false);
-      if (btnIdle) { btnIdle.textContent = '✅ 已儲存'; }
+      markGlobalDirty(false);
+      [gOff, dOff].forEach(function(b) { if (b) { b.textContent = '✅ 已儲存'; } });
       setTimeout(function() {
-        if (btnIdle) btnIdle.textContent = '💾 儲存';
+        [gOff, dOff].forEach(function(b) { if (b) b.textContent = '💾 儲存'; });
       }, 2000);
     });
   } else {
-    markDailyDirty(false);
+    markGlobalDirty(false);
   }
 }
+
+// 舊版 daily 按鈕也呼叫全域版
+function dailySaveToCloud() { globalSaveToCloud(); }
 
 // 讓 Firebase 模組可以存取 ensureStateFields
 window.ensureStateFields = ensureStateFields;
@@ -1065,7 +1094,7 @@ function switchTab(tab) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
-  if (tab === 'daily') { markDailyDirty(_dailyDirty); renderDaily(); if (dailyTab==='overview') renderDailyOverview(); }
+  if (tab === 'daily') { markGlobalDirty(_dailyDirty); if (dailyTab==='overview') renderDailyOverview(); else renderDaily(); }
   if (tab === 'mushroom') { renderMushrooms(); renderCategoryDatalist(); }
   if (tab === 'flower') renderFlower();
   if (tab === 'essence') renderEssence();
@@ -1249,39 +1278,72 @@ function renderEssence() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><input class="cell-input" value="${row.name}" onchange="updateEssenceRow(${i},'name',this.value)" style="min-width:100px"></td>
-      <td class="cell-white"><input class="cell-input" type="number" value="${row.essenceHave}" onchange="updateEssenceRow(${i},'essenceHave',+this.value)"
-        onkeydown="essenceCellTab(event,${i},'essenceHave')"></td>
-      <td class="cell-green"><input class="cell-input" type="number" value="${row.essenceLimit}" onchange="updateEssenceRow(${i},'essenceLimit',+this.value)" style="background:transparent;border-color:#2d5a2d;color:var(--green-text)"></td>
-      <td class="cell-yellow" style="font-weight:800">${essenceNeed}</td>
-      <td class="cell-green"><input class="cell-input" type="number" value="${row.flowerLimit}" onchange="updateEssenceRow(${i},'flowerLimit',+this.value)" style="background:transparent;border-color:#2d5a2d;color:var(--green-text)"></td>
-      <td class="cell-white"><input class="cell-input" type="number" value="${row.flowerHave}" onchange="updateEssenceRow(${i},'flowerHave',+this.value)"
-        onkeydown="essenceCellTab(event,${i},'flowerHave')"></td>
-      <td class="cell-yellow">${flowerCanCollect}</td>
-      <td class="cell-yellow" style="color:${needConsume > 0 ? 'var(--accent5)' : 'var(--accent)'}">${needConsume}</td>
+      <td class="cell-white"><input class="cell-input essence-numpad" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next"
+        data-row="${i}" data-field="essenceHave"
+        value="${row.essenceHave}" style="min-width:80px;text-align:center"></td>
+      <td class="cell-green"><input class="cell-input" type="text" inputmode="numeric" pattern="[0-9]*"
+        value="${row.essenceLimit}" onchange="updateEssenceRow(${i},'essenceLimit',+this.value)"
+        style="background:transparent;border-color:#2d5a2d;color:var(--green-text);min-width:80px;text-align:center"></td>
+      <td class="cell-yellow" style="font-weight:800;min-width:60px">${essenceNeed}</td>
+      <td class="cell-green"><input class="cell-input" type="text" inputmode="numeric" pattern="[0-9]*"
+        value="${row.flowerLimit}" onchange="updateEssenceRow(${i},'flowerLimit',+this.value)"
+        style="background:transparent;border-color:#2d5a2d;color:var(--green-text);min-width:80px;text-align:center"></td>
+      <td class="cell-white"><input class="cell-input essence-numpad" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next"
+        data-row="${i}" data-field="flowerHave"
+        value="${row.flowerHave}" style="min-width:80px;text-align:center"></td>
+      <td class="cell-yellow" style="min-width:60px">${flowerCanCollect}</td>
+      <td class="cell-yellow" style="color:${needConsume > 0 ? 'var(--accent5)' : 'var(--accent)'};min-width:60px">${needConsume}</td>
       <td><button class="btn-del" onclick="delEssenceRow(${i})">×</button></td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-// Auto-advance to next row on Enter in essence/flower inputs
-function essenceCellTab(event, i, field) {
-  if (event.key === 'Enter' || event.key === 'Tab') {
-    event.preventDefault();
-    const rows = getEssenceRows();
-    const nextIdx = i + 1;
-    if (nextIdx < rows.length) {
-      // find next input of same field type
-      const inputs = document.querySelectorAll(`#essenceBody tr`);
-      if (inputs[nextIdx]) {
-        const colMap = { essenceHave: 1, flowerHave: 5 };
-        const col = colMap[field];
-        const inp = inputs[nextIdx].querySelectorAll('td')[col]?.querySelector('input');
-        if (inp) { inp.focus(); inp.select(); }
-      }
-    }
+// 精華 numpad: event delegation
+// 順序: row0精華多 → row0花有 → row1精華多 → row1花有 → ...
+function saveEssenceNumpadSilent(el) {
+  const row = parseInt(el.dataset.row, 10);
+  const field = el.dataset.field;
+  if (isNaN(row) || !field) return;
+  const val = parseInt(el.value, 10);
+  if (isNaN(val)) return;
+  getEssenceRows()[row][field] = val;
+  saveLocal();
+  // 更新計算欄（不重繪整個表格）
+  const rows = getEssenceRows();
+  const r = rows[row];
+  const essenceNeed = r.essenceHave - r.essenceLimit;
+  const flowerCanCollect = r.flowerLimit - r.flowerHave;
+  const needConsume = essenceNeed - flowerCanCollect;
+  const trs = document.querySelectorAll('#essenceBody tr');
+  if (trs[row]) {
+    const tds = trs[row].querySelectorAll('td');
+    if (tds[3]) tds[3].textContent = essenceNeed;
+    if (tds[6]) tds[6].textContent = flowerCanCollect;
+    if (tds[7]) { tds[7].textContent = needConsume; tds[7].style.color = needConsume > 0 ? 'var(--accent5)' : 'var(--accent)'; }
   }
 }
+
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter' && e.key !== 'Tab') return;
+  const el = e.target;
+  if (!el.classList.contains('essence-numpad')) return;
+  e.preventDefault();
+  e.stopPropagation();
+  saveEssenceNumpadSilent(el);
+  const all = Array.from(document.querySelectorAll('.essence-numpad'));
+  const idx = all.indexOf(el);
+  if (idx === -1) return;
+  const next = all[(idx + 1) % all.length];
+  next.focus();
+  next.select();
+}, true);
+
+document.addEventListener('blur', function(e) {
+  const el = e.target;
+  if (!el.classList.contains('essence-numpad')) return;
+  saveEssenceNumpadSilent(el);
+}, true);
 
 function updateEssenceRow(i, key, val) {
   getEssenceRows()[i][key] = val;
@@ -1413,32 +1475,48 @@ function getDailyRecord() {
   const today = getTodayKey();
   if (!state.dailyRecords[acct]) state.dailyRecords[acct] = {};
   if (!state.dailyRecords[acct][today]) {
+    // 新的一天：從最近一筆舊資料繼承不重置的欄位
+    const lim = state.dailyLimits || {};
+    const allDates = Object.keys(state.dailyRecords[acct]).sort();
+    const lastDate = allDates.length > 0 ? allDates[allDates.length - 1] : null;
+    const prev = lastDate ? state.dailyRecords[acct][lastDate] : {};
     state.dailyRecords[acct][today] = {
-      mushCount: 3, raidCount: 1, sensorCount: 1,
-      flowerDone: null, flowerCoins: 0,
-      levelStage1: '', levelStage2: '', levelStage3: '',
-      monthlyStage1: '', monthlyStage2: '', monthlyStage3: '',
-      essenceWhite: 0, essenceYellow: 0, essenceRed: 0, essenceBlue: 0,
-      flowerWhite: 0, flowerYellow: 0, flowerRed: 0, flowerBlue: 0
+      // 每日自動重置
+      mushCount:  lim.mushCount  !== undefined ? lim.mushCount  : 3,
+      raidCount:  lim.raidCount  !== undefined ? lim.raidCount  : 1,
+      sensorCount:lim.sensorCount!== undefined ? lim.sensorCount: 1,
+      flowerCoins: 0,
+      flowerDone: null,
+      // 保留不重置（從前一天繼承）
+      essenceWhite:  prev.essenceWhite  || 0,
+      essenceYellow: prev.essenceYellow || 0,
+      essenceRed:    prev.essenceRed    || 0,
+      essenceBlue:   prev.essenceBlue   || 0,
+      flowerWhite:   prev.flowerWhite   || 0,
+      flowerYellow:  prev.flowerYellow  || 0,
+      flowerRed:     prev.flowerRed     || 0,
+      flowerBlue:    prev.flowerBlue    || 0,
+      levelStage1:   prev.levelStage1   || '',
+      monthlyStage1: prev.monthlyStage1 || '',
     };
   }
   const r = state.dailyRecords[acct][today];
+  // 向下相容
   if (r.essenceLeft !== undefined && r.essenceWhite === undefined) { r.essenceWhite = r.essenceLeft; delete r.essenceLeft; }
   if (r.flowerCoins === undefined) r.flowerCoins = 0;
   if (r.essenceWhite === undefined) { r.essenceWhite = 0; r.essenceYellow = 0; r.essenceRed = 0; r.essenceBlue = 0; }
   if (r.flowerWhite === undefined) { r.flowerWhite = 0; r.flowerYellow = 0; r.flowerRed = 0; r.flowerBlue = 0; }
-  if (r.levelStage !== undefined && r.levelStage1 === undefined) { r.levelStage1 = r.levelStage; r.levelStage2 = ''; r.levelStage3 = ''; delete r.levelStage; }
-  if (r.monthlyStage !== undefined && r.monthlyStage1 === undefined) { r.monthlyStage1 = r.monthlyStage; r.monthlyStage2 = ''; r.monthlyStage3 = ''; delete r.monthlyStage; }
-  if (r.levelStage1 === undefined) { r.levelStage1 = ''; r.levelStage2 = ''; r.levelStage3 = ''; }
-  if (r.monthlyStage1 === undefined) { r.monthlyStage1 = ''; r.monthlyStage2 = ''; r.monthlyStage3 = ''; }
-  // NEW: daily reset counts (v4)
+  if (r.levelStage !== undefined && r.levelStage1 === undefined) { r.levelStage1 = r.levelStage; delete r.levelStage; }
+  if (r.monthlyStage !== undefined && r.monthlyStage1 === undefined) { r.monthlyStage1 = r.monthlyStage; delete r.monthlyStage; }
+  if (r.levelStage1 === undefined) r.levelStage1 = '';
+  if (r.monthlyStage1 === undefined) r.monthlyStage1 = '';
   if (r.mushCount === undefined) r.mushCount = 3;
   if (r.raidCount === undefined) r.raidCount = 1;
   if (r.sensorCount === undefined) r.sensorCount = 1;
   return r;
 }
 
-let dailyTab = 'single';
+let dailyTab = 'overview';
 
 function switchDailyTab(tab) {
   dailyTab = tab;
@@ -1447,6 +1525,7 @@ function switchDailyTab(tab) {
   document.getElementById('dailySingleContent').style.display = tab==='single' ? '' : 'none';
   document.getElementById('dailyOverviewContent').style.display = tab==='overview' ? '' : 'none';
   if (tab==='overview') renderDailyOverview();
+  if (tab==='single') renderDaily();
 }
 
 function renderDaily() {
@@ -1565,7 +1644,6 @@ function renderDaily() {
       <div class="daily-item" style="grid-column: 1 / -1">
         <label>✨ 精華剩餘數量</label>
         <div style="display:flex;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap">
-          <span style="font-size:0.8rem;font-weight:700;color:var(--text2)">✨精華</span>
           ${[
             {key:'essenceWhite', label:'白', color:'#e6edf3'},
             {key:'essenceYellow',label:'黃', color:'#d29922'},
@@ -1588,7 +1666,6 @@ function renderDaily() {
       <div class="daily-item" style="grid-column: 1 / -1">
         <label>🌸 花朵剩餘數量</label>
         <div style="display:flex;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap">
-          <span style="font-size:0.8rem;font-weight:700;color:var(--text2)">🌸花朵</span>
           ${[
             {key:'flowerWhite', label:'白', color:'#e6edf3'},
             {key:'flowerYellow',label:'黃', color:'#d29922'},
@@ -1764,7 +1841,7 @@ function renderDailyOverview() {
       if (!r) {
         rowParts.push(
           '<tr><td rowspan="2" style="font-weight:800;color:var(--accent2);white-space:nowrap">' + acct + '</td>' +
-          '<td colspan="9" style="color:var(--text3);font-size:0.8rem">無紀錄</td></tr><tr></tr>'
+          '<td colspan="11" style="color:var(--text3);font-size:0.8rem">無紀錄</td></tr><tr></tr>'
         );
         return;
       }
@@ -1773,6 +1850,7 @@ function renderDailyOverview() {
         ? span('✅60', 'var(--accent)')
         : coins > 0 ? span(coins, 'var(--accent3)') : '—';
       const ls = (r.levelStage1 !== undefined ? r.levelStage1 : r.levelStage) || '';
+      const ms = (r.monthlyStage1 !== undefined ? r.monthlyStage1 : r.monthlyStage) || '';
       const myMush = state.mushrooms.filter(function(m) { return m.acct === acct && m.expireAt > Date.now(); });
       const mushStr = myMush.length > 0 ? span('🍄' + myMush.length, 'var(--accent3)') : '—';
       rowParts.push(
@@ -1788,6 +1866,7 @@ function renderDailyOverview() {
           '<td>' + cv(r.essenceBlue, '#58a6ff') + '</td>' +
           '<td rowspan="2">' + mushStr + '</td>' +
           '<td rowspan="2" style="font-size:0.8rem;white-space:pre-wrap;max-width:120px">' + (ls || '—') + '</td>' +
+          '<td rowspan="2" style="font-size:0.8rem;white-space:pre-wrap;max-width:120px">' + (ms || '—') + '</td>' +
         '</tr>' +
         '<tr>' +
           '<td>' + cv(r.flowerWhite, '#e6edf3') + '</td>' +
@@ -1807,7 +1886,7 @@ function renderDailyOverview() {
               '<th rowspan="2">探測</th><th rowspan="2">金幣</th>' +
               '<th style="color:#e6edf3">白精</th><th style="color:#d29922">黃精</th>' +
               '<th style="color:#ff7b72">紅精</th><th style="color:#58a6ff">藍精</th>' +
-              '<th rowspan="2">卡菇</th><th rowspan="2">等級任務</th>' +
+              '<th rowspan="2">卡菇</th><th rowspan="2">等級任務</th><th rowspan="2">每月任務</th>' +
             '</tr>' +
             '<tr>' +
               '<th style="color:#e6edf3">白花</th><th style="color:#d29922">黃花</th>' +
