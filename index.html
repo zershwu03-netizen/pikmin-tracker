@@ -601,12 +601,12 @@
           <tr>
             <th>花種名稱</th>
             <th>精華多 <span class="badge badge-blue">輸入</span></th>
-            <th>精華上限 <span class="badge badge-green">參數</span></th>
-            <th>精華需要餵 <span class="badge badge-yellow">計算</span></th>
-            <th>花上限 <span class="badge badge-green">參數</span></th>
             <th>花有 <span class="badge badge-blue">輸入</span></th>
-            <th>花可收 <span class="badge badge-yellow">計算</span></th>
+            <th>精華需要餵 <span class="badge badge-yellow">計算</span></th>
             <th>需消耗 <span class="badge badge-yellow">計算</span></th>
+            <th>精華上限 <span class="badge badge-green">參數</span></th>
+            <th>花上限 <span class="badge badge-green">參數</span></th>
+            <th>花可收 <span class="badge badge-yellow">計算</span></th>
             <th></th>
           </tr>
         </thead>
@@ -614,7 +614,7 @@
       </table>
     </div>
   </div>
-  <p class="info-tip">💡 精華需要餵 = 精華多 − 精華上限　｜　花可收 = 花上限 − 花有　｜　需消耗 = 精華需要餵 − 花可收</p>
+  <p class="info-tip">💡 精華需要餵 = 精華多 − 精華上限　｜　需消耗 = 精華需要餵 − 花可收　｜　花可收 = 花上限 − 花有</p>
 </div>
 
 <!-- ══════ 2. 帳號紀錄 ══════ -->
@@ -1296,19 +1296,17 @@ function renderEssence() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><input class="cell-input" value="${row.name}" onchange="updateEssenceRow(${i},'name',this.value)" style="min-width:100px"></td>
-      <td class="cell-white"><input class="cell-input essence-numpad" type="number" data-row="${i}" data-field="essenceHave"
-        value="${row.essenceHave}" style="min-width:80px;text-align:center"
-        onfocus="this._prev=this.value;this.value=''" onblur="if(this.value==='')this.value=this._prev||0"></td>
+      <td class="cell-white"><input class="cell-input essence-numpad" type="text" data-row="${i}" data-field="essenceHave"
+        value="${row.essenceHave}" style="min-width:80px;text-align:center"></td>
+      <td class="cell-white"><input class="cell-input essence-numpad" type="text" data-row="${i}" data-field="flowerHave"
+        value="${row.flowerHave}" style="min-width:80px;text-align:center"></td>
+      <td class="cell-yellow" style="font-weight:800;min-width:60px">${essenceNeed}</td>
+      <td class="cell-yellow" style="color:${needConsume > 0 ? 'var(--accent5)' : 'var(--accent)'};min-width:60px">${needConsume}</td>
       <td class="cell-green"><input class="cell-input" type="text" value="${row.essenceLimit}" onchange="updateEssenceRow(${i},'essenceLimit',+this.value)"
         style="background:transparent;border-color:#2d5a2d;color:var(--green-text);min-width:80px;text-align:center"></td>
-      <td class="cell-yellow" style="font-weight:800;min-width:60px">${essenceNeed}</td>
       <td class="cell-green"><input class="cell-input" type="text" value="${row.flowerLimit}" onchange="updateEssenceRow(${i},'flowerLimit',+this.value)"
         style="background:transparent;border-color:#2d5a2d;color:var(--green-text);min-width:80px;text-align:center"></td>
-      <td class="cell-white"><input class="cell-input essence-numpad" type="number" data-row="${i}" data-field="flowerHave"
-        value="${row.flowerHave}" style="min-width:80px;text-align:center"
-        onfocus="this._prev=this.value;this.value=''" onblur="if(this.value==='')this.value=this._prev||0"></td>
       <td class="cell-yellow" style="min-width:60px">${flowerCanCollect}</td>
-      <td class="cell-yellow" style="color:${needConsume > 0 ? 'var(--accent5)' : 'var(--accent)'};min-width:60px">${needConsume}</td>
       <td><button class="btn-del" onclick="delEssenceRow(${i})">×</button></td>
     `;
     tbody.appendChild(tr);
@@ -1334,17 +1332,34 @@ function _essenceWriteVal(el) {
   if (trs[row]) {
     var tds = trs[row].querySelectorAll('td');
     if (tds[3]) tds[3].textContent = essenceNeed;
-    if (tds[6]) tds[6].textContent = flowerCan;
-    if (tds[7]) { tds[7].textContent = needConsume; tds[7].style.color = needConsume > 0 ? 'var(--accent5)' : 'var(--accent)'; }
+    if (tds[4]) { tds[4].textContent = needConsume; tds[4].style.color = needConsume > 0 ? 'var(--accent5)' : 'var(--accent)'; }
+    if (tds[7]) tds[7].textContent = flowerCan;
   }
 }
 
-// blur 時靜默寫值 + 存檔（不重繪，不干擾焦點）
+// focus：記住原值並清空，方便直接輸入
+document.addEventListener('focus', function(e) {
+  var el = e.target;
+  if (!el.classList.contains('essence-numpad') && !el.classList.contains('daily-numpad')) return;
+  el._prevVal = el.value;
+  el.value = '';
+}, true);
+
+// blur：若空白則還原，否則寫值存檔
 document.addEventListener('blur', function(e) {
   var el = e.target;
-  if (!el.classList.contains('essence-numpad')) return;
-  _essenceWriteVal(el);
-  saveLocal(); // 標記 dirty，等使用者按儲存
+  if (el.classList.contains('essence-numpad')) {
+    if (el.value === '' || el.value === null) {
+      el.value = el._prevVal || 0;
+    }
+    _essenceWriteVal(el);
+    saveLocal();
+  } else if (el.classList.contains('daily-numpad')) {
+    if (el.value === '' || el.value === null) {
+      el.value = el._prevVal || 0;
+    }
+    saveDailyNumpadSilent(el);
+  }
 }, true);
 
 // Enter / Tab 跳格：同時監聽 keydown + keyup 確保 Android 輸入法也能捕捉
@@ -1680,9 +1695,9 @@ function renderDaily() {
             <div style="display:flex;align-items:center;gap:3px">
               <span style="font-size:0.8rem;font-weight:700;color:${f.color}">${f.label}</span>
               <button class="btn-counter" onclick="adjustDaily('${f.key}',-1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">−</button>
-              <input type="number" class="cell-input daily-numpad" data-key="${f.key}"
+              <input type="text" class="cell-input daily-numpad" data-key="${f.key}"
                 style="width:56px;text-align:center;font-size:1rem;font-weight:800;color:${f.color};background:transparent;border-color:${f.color}55;padding:4px 4px"
-                value="${rec[f.key]||0}" onfocus="this._prev=this.value;this.value=''" onblur="if(this.value==='')this.value=this._prev||0">
+                value="${rec[f.key]||0}">
               <button class="btn-counter" onclick="adjustDaily('${f.key}',1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">＋</button>
             </div>
           `).join('')}
@@ -1702,9 +1717,9 @@ function renderDaily() {
             <div style="display:flex;align-items:center;gap:3px">
               <span style="font-size:0.8rem;font-weight:700;color:${f.color}">${f.label}</span>
               <button class="btn-counter" onclick="adjustDaily('${f.key}',-1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">−</button>
-              <input type="number" class="cell-input daily-numpad" data-key="${f.key}"
+              <input type="text" class="cell-input daily-numpad" data-key="${f.key}"
                 style="width:56px;text-align:center;font-size:1rem;font-weight:800;color:${f.color};background:transparent;border-color:${f.color}55;padding:4px 4px"
-                value="${rec[f.key]||0}" onfocus="this._prev=this.value;this.value=''" onblur="if(this.value==='')this.value=this._prev||0">
+                value="${rec[f.key]||0}">
               <button class="btn-counter" onclick="adjustDaily('${f.key}',1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">＋</button>
             </div>
           `).join('')}
@@ -1768,11 +1783,7 @@ document.addEventListener('keyup', function(e) {
   e.preventDefault();
   e.stopPropagation();
 }, true);
-document.addEventListener('blur', function(e) {
-  var el = e.target;
-  if (!el.classList.contains('daily-numpad')) return;
-  saveDailyNumpadSilent(el);
-}, true);
+
 
 // Android IME Enter 有時以 insertLineBreak inputType 觸發 input 事件
 document.addEventListener('input', function(e) {
