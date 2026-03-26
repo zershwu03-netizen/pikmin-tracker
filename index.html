@@ -324,12 +324,127 @@
   .category-combo-wrap { position: relative; display: flex; gap: 4px; align-items: center; }
   .category-combo-wrap input { min-width: 130px; }
 </style>
+<!-- Firebase SDK -->
+<script type="module">
+  // ─── Firebase Init ────────────────────────────────────────
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, onSnapshot, setDoc, getDoc }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDFKHWPnudlYumkrDtUHPoTQqHkJ0xBwEA",
+    authDomain: "pikmin-tracker.firebaseapp.com",
+    projectId: "pikmin-tracker",
+    storageBucket: "pikmin-tracker.firebasestorage.app",
+    messagingSenderId: "180421853007",
+    appId: "1:180421853007:web:4235b107df43538a8ccf3a"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+  const DOC_REF = doc(db, 'tracker', 'shared');
+
+  // 讓主腳本可以呼叫儲存
+  window._fbSave = async function(stateObj) {
+    try {
+      await setDoc(DOC_REF, { data: JSON.stringify(stateObj) });
+    } catch(e) { console.error('Firebase save error', e); }
+  };
+
+  // 即時監聽：雲端有變動就更新畫面
+  onSnapshot(DOC_REF, (snap) => {
+    if (!snap.exists()) return;
+    try {
+      const remote = JSON.parse(snap.data().data);
+      // 把 remote 合併進 window.state（保留 currentAccount 是本地個人設定）
+      const cur = window.state ? window.state.currentAccount : null;
+      window.state = ensureStateFields(remote);
+      if (cur && window.state.accounts.includes(cur)) {
+        window.state.currentAccount = cur;
+      }
+      const _dot = document.getElementById('syncDot');
+      const _txt = document.getElementById('syncText');
+      if (_dot) { _dot.style.background='#3fb950'; _dot.style.boxShadow='0 0 6px #3fb950'; }
+      if (_txt) _txt.textContent='已同步';
+      setTimeout(function(){
+        if (_dot){_dot.style.background='#58a6ff';_dot.style.boxShadow='none';}
+        if (_txt) _txt.textContent='線上';
+      }, 1500);
+      if (window._appReady) {
+        renderAccounts();
+        const tab = getCurrentTab();
+        if (tab === 'essence')  renderEssence();
+        if (tab === 'daily')    { renderDaily(); }
+        if (tab === 'mushroom') renderMushrooms();
+        if (tab === 'flower')   renderFlower();
+        checkDefaultBtn();
+      }
+    } catch(e) { console.error('Firebase parse error', e); }
+  });
+
+  // 第一次載入：等雲端資料回來再初始化
+  getDoc(DOC_REF).then(snap => {
+    if (snap.exists()) {
+      try {
+        const remote = JSON.parse(snap.data().data);
+        window.state = ensureStateFields(remote);
+        // 如果本地有 currentAccount 設定就保留
+        const localAcct = localStorage.getItem('pikmin_cur_acct');
+        if (localAcct && window.state.accounts.includes(localAcct)) {
+          window.state.currentAccount = localAcct;
+        }
+      } catch(e) {}
+    }
+    // 移除載入畫面，啟動 app
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('appRoot').style.display = '';
+    const _d2 = document.getElementById('syncDot');
+    const _t2 = document.getElementById('syncText');
+    if (_d2) { _d2.style.background='#58a6ff'; _d2.style.boxShadow='none'; }
+    if (_t2) _t2.textContent='線上';
+    window._appReady = true;
+    renderAccounts();
+    renderEssence();
+    checkDefaultBtn();
+    renderCategoryDatalist();
+    const td = document.getElementById('todayDate');
+    if (td) td.textContent = getTodayKey();
+  }).catch(e => {
+    console.error('Firebase load error', e);
+    document.getElementById('loadingScreen').innerHTML =
+      '<div style="color:#ff7b72;padding:40px;text-align:center">⚠️ 無法連線到資料庫<br><small>' + e.message + '</small></div>';
+  });
+</script>
 </head>
 <body>
 
+<!-- 載入畫面 -->
+<div id="loadingScreen" style="position:fixed;inset:0;background:#0d1117;display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px">
+  <div style="font-size:2.5rem">🌿</div>
+  <div style="color:#3fb950;font-weight:800;font-size:1.1rem">皮克敏追蹤器</div>
+  <div style="color:#8b949e;font-size:0.85rem">連線雲端資料中...</div>
+  <div style="width:200px;height:4px;background:#21262d;border-radius:2px;overflow:hidden;margin-top:8px">
+    <div style="height:100%;background:linear-gradient(90deg,#3fb950,#58a6ff);animation:loadbar 1.5s ease-in-out infinite" id="loadbar"></div>
+  </div>
+</div>
+<style>
+@keyframes loadbar {
+  0%{width:0%;margin-left:0}
+  50%{width:60%;margin-left:20%}
+  100%{width:0%;margin-left:100%}
+}
+</style>
+
+<div id="appRoot" style="display:none">
 <header>
   <div class="logo">🌿 <span>皮克敏追蹤器</span></div>
-  <div style="font-size:0.8rem;color:var(--text3)" id="clock"></div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div id="syncStatus" style="font-size:0.75rem;color:var(--text3);display:flex;align-items:center;gap:5px">
+      <span id="syncDot" style="width:7px;height:7px;border-radius:50%;background:var(--text3);display:inline-block"></span>
+      <span id="syncText">連線中</span>
+    </div>
+    <div style="font-size:0.8rem;color:var(--text3)" id="clock"></div>
+  </div>
 </header>
 
 <div class="account-bar">
@@ -781,54 +896,41 @@
 <div class="copy-toast" id="copyToast">✅ 座標已複製</div>
 
 <script>
-// ─── State ───────────────────────────────────────────────
-const STATE_KEY = 'pikmin_tracker_v4';
-let state = load();
-
-function load() {
-  try {
-    const s = localStorage.getItem(STATE_KEY);
-    if (s) {
-      const parsed = JSON.parse(s);
-      // migrate from v3 key
-      return parsed;
-    }
-    // try migrate from v3
-    const old = localStorage.getItem('pikmin_tracker_v3');
-    if (old) {
-      const o = JSON.parse(old);
-      o.mushCategories = o.mushCategories || getDefaultCategories();
-      o.globalEssenceLimit = o.globalEssenceLimit || 250;
-      o.globalFlowerLimit = o.globalFlowerLimit || 400;
-      return o;
-    }
-  } catch(e) {}
-  return {
-    accounts: ['帳號A', '帳號B'],
-    currentAccount: '帳號A',
-    essenceRows: {},
-    essenceParams: {},
-    dailyRecords: {},
-    mushrooms: [],
-    flowerRows: {},
-    flowerParams: {},
-    flowerHistory: {},
-    mushCategories: getDefaultCategories(),
-    globalEssenceLimit: 250,
-    globalFlowerLimit: 400,
-  };
-}
-
+// ─── State（Firebase 版）──────────────────────────────────
 function getDefaultCategories() {
   return ['巨大活動','大水','大火','大電','大毒','一般水','一般火','一般電','一般毒','大紅','大藍','大白','大黃','大粉','大紫'];
 }
 
-function save() { try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e){} }
+function ensureStateFields(s) {
+  if (!s) s = {};
+  if (!s.accounts || !s.accounts.length) s.accounts = ['帳號A', '帳號B'];
+  if (!s.currentAccount) s.currentAccount = s.accounts[0];
+  if (!s.essenceRows)   s.essenceRows   = {};
+  if (!s.essenceParams) s.essenceParams = {};
+  if (!s.dailyRecords)  s.dailyRecords  = {};
+  if (!s.mushrooms)     s.mushrooms     = [];
+  if (!s.flowerRows)    s.flowerRows    = {};
+  if (!s.flowerParams)  s.flowerParams  = {};
+  if (!s.flowerHistory) s.flowerHistory = {};
+  if (!s.mushCategories)     s.mushCategories     = getDefaultCategories();
+  if (!s.globalEssenceLimit) s.globalEssenceLimit = 250;
+  if (!s.globalFlowerLimit)  s.globalFlowerLimit  = 400;
+  return s;
+}
 
-// ensure new fields exist on loaded state
-if (!state.mushCategories) state.mushCategories = getDefaultCategories();
-if (!state.globalEssenceLimit) state.globalEssenceLimit = 250;
-if (!state.globalFlowerLimit) state.globalFlowerLimit = 400;
+// 初始用空白 state，Firebase 模組載入後會填入雲端資料
+window.state = ensureStateFields({});
+
+// save() 同時存雲端（Firebase）與本地 currentAccount 偏好
+function save() {
+  // 記住本人選的帳號（本地偏好，不影響別人）
+  try { localStorage.setItem('pikmin_cur_acct', window.state.currentAccount); } catch(e) {}
+  // 推送到 Firebase
+  if (window._fbSave) window._fbSave(window.state);
+}
+
+// 讓 Firebase 模組可以存取 ensureStateFields
+window.ensureStateFields = ensureStateFields;
 
 // ─── Clock ────────────────────────────────────────────────
 function updateClock() {
@@ -865,7 +967,9 @@ function renderAccounts() {
     btn.title = '右鍵或長按可編輯／刪除；拖曳可排序';
     btn.addEventListener('click', (e) => {
       if (e.target.classList.contains('drag-handle')) return;
-      state.currentAccount = a; save(); renderAccounts(); switchTab(getCurrentTab());
+      state.currentAccount = a;
+      try { localStorage.setItem('pikmin_cur_acct', a); } catch(_){}
+      renderAccounts(); switchTab(getCurrentTab());
     });
     btn.oncontextmenu = (e) => { e.preventDefault(); openCtxMenu(e, a, idx); };
     // drag-and-drop
@@ -2213,11 +2317,21 @@ function calcEndTime(startTime, addMins) {
 }
 
 // ─── Init ─────────────────────────────────────────────────
-renderAccounts();
-renderEssence();
-checkDefaultBtn();
-renderCategoryDatalist();
-document.getElementById('todayDate') && (document.getElementById('todayDate').textContent = getTodayKey());
+// 實際初始化由 Firebase 模組在雲端資料載入後觸發（見 <head> 的 type="module" 區塊）
+// 這裡只設定 _appReady 旗標供 Firebase 模組判斷
+window._appReady = false;
+
+// 讓所有 render 函式可從 Firebase 模組呼叫
+window.renderAccounts      = renderAccounts;
+window.renderEssence       = renderEssence;
+window.renderDaily         = renderDaily;
+window.renderMushrooms     = renderMushrooms;
+window.renderFlower        = renderFlower;
+window.checkDefaultBtn     = checkDefaultBtn;
+window.renderCategoryDatalist = renderCategoryDatalist;
+window.getCurrentTab       = getCurrentTab;
+window.getTodayKey         = getTodayKey;
 </script>
+</div><!-- /appRoot -->
 </body>
 </html>
