@@ -459,6 +459,8 @@
     renderCategoryDatalist();
     const td = document.getElementById('todayDate');
     if (td) td.textContent = getTodayKey();
+    // 初始化儲存按鈕狀態
+    if (typeof markDailyDirty === 'function') markDailyDirty(false);
   }).catch(e => {
     console.error('Firebase load error', e);
     document.getElementById('loadingScreen').innerHTML =
@@ -591,6 +593,7 @@
         font-size:0.88rem;transition:all 0.2s;animation:savePulse 1.2s ease-in-out infinite;
       ">💾 儲存</button>
       <button id="dailySaveBtnIdle" onclick="dailySaveToCloud()" style="
+        display:inline-block;
         background:var(--surface2);color:var(--text2);border:1px solid var(--border);
         padding:8px 18px;border-radius:8px;cursor:pointer;font-weight:700;
         font-family:inherit;font-size:0.88rem;transition:all 0.2s;
