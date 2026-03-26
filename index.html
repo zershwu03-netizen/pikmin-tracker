@@ -1280,7 +1280,8 @@ function renderEssence() {
       <td><input class="cell-input" value="${row.name}" onchange="updateEssenceRow(${i},'name',this.value)" style="min-width:100px"></td>
       <td class="cell-white"><input class="cell-input essence-numpad" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next"
         data-row="${i}" data-field="essenceHave"
-        value="${row.essenceHave}" style="min-width:80px;text-align:center"></td>
+        value="${row.essenceHave}" style="min-width:80px;text-align:center"
+        onfocus="this.select()"></td>
       <td class="cell-green"><input class="cell-input" type="text" inputmode="numeric" pattern="[0-9]*"
         value="${row.essenceLimit}" onchange="updateEssenceRow(${i},'essenceLimit',+this.value)"
         style="background:transparent;border-color:#2d5a2d;color:var(--green-text);min-width:80px;text-align:center"></td>
@@ -1290,7 +1291,8 @@ function renderEssence() {
         style="background:transparent;border-color:#2d5a2d;color:var(--green-text);min-width:80px;text-align:center"></td>
       <td class="cell-white"><input class="cell-input essence-numpad" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next"
         data-row="${i}" data-field="flowerHave"
-        value="${row.flowerHave}" style="min-width:80px;text-align:center"></td>
+        value="${row.flowerHave}" style="min-width:80px;text-align:center"
+        onfocus="this.select()"></td>
       <td class="cell-yellow" style="min-width:60px">${flowerCanCollect}</td>
       <td class="cell-yellow" style="color:${needConsume > 0 ? 'var(--accent5)' : 'var(--accent)'};min-width:60px">${needConsume}</td>
       <td><button class="btn-del" onclick="delEssenceRow(${i})">×</button></td>
@@ -1301,48 +1303,59 @@ function renderEssence() {
 
 // 精華 numpad: event delegation
 // 順序: row0精華多 → row0花有 → row1精華多 → row1花有 → ...
-function saveEssenceNumpadSilent(el) {
-  const row = parseInt(el.dataset.row, 10);
-  const field = el.dataset.field;
+// 精華 numpad：靜默寫值（不碰 DOM，不觸發重繪，不干擾焦點）
+function _essenceWriteVal(el) {
+  var row = parseInt(el.dataset.row, 10);
+  var field = el.dataset.field;
   if (isNaN(row) || !field) return;
-  const val = parseInt(el.value, 10);
+  var val = parseInt(el.value, 10);
   if (isNaN(val)) return;
   getEssenceRows()[row][field] = val;
-  saveLocal();
-  // 更新計算欄（不重繪整個表格）
-  const rows = getEssenceRows();
-  const r = rows[row];
-  const essenceNeed = r.essenceHave - r.essenceLimit;
-  const flowerCanCollect = r.flowerLimit - r.flowerHave;
-  const needConsume = essenceNeed - flowerCanCollect;
-  const trs = document.querySelectorAll('#essenceBody tr');
+  // 只更新計算欄文字，不重繪表格
+  var r = getEssenceRows()[row];
+  var essenceNeed = r.essenceHave - r.essenceLimit;
+  var flowerCan   = r.flowerLimit - r.flowerHave;
+  var needConsume = essenceNeed - flowerCan;
+  var trs = document.querySelectorAll('#essenceBody tr');
   if (trs[row]) {
-    const tds = trs[row].querySelectorAll('td');
+    var tds = trs[row].querySelectorAll('td');
     if (tds[3]) tds[3].textContent = essenceNeed;
-    if (tds[6]) tds[6].textContent = flowerCanCollect;
+    if (tds[6]) tds[6].textContent = flowerCan;
     if (tds[7]) { tds[7].textContent = needConsume; tds[7].style.color = needConsume > 0 ? 'var(--accent5)' : 'var(--accent)'; }
   }
 }
 
+// blur 時靜默寫值 + 存檔（不重繪，不干擾焦點）
+document.addEventListener('blur', function(e) {
+  var el = e.target;
+  if (!el.classList.contains('essence-numpad')) return;
+  _essenceWriteVal(el);
+  saveLocal(); // 標記 dirty，等使用者按儲存
+}, true);
+
+// Enter / Tab 跳格：同時監聽 keydown + keyup 確保 Android 輸入法也能捕捉
+function _essenceJumpNext(el) {
+  _essenceWriteVal(el);
+  var all = Array.from(document.querySelectorAll('.essence-numpad'));
+  var idx = all.indexOf(el);
+  if (idx === -1) return;
+  var next = all[(idx + 1) % all.length];
+  setTimeout(function() { next.focus(); next.select(); }, 0);
+}
 document.addEventListener('keydown', function(e) {
   if (e.key !== 'Enter' && e.key !== 'Tab') return;
-  const el = e.target;
+  var el = e.target;
   if (!el.classList.contains('essence-numpad')) return;
   e.preventDefault();
   e.stopPropagation();
-  saveEssenceNumpadSilent(el);
-  const all = Array.from(document.querySelectorAll('.essence-numpad'));
-  const idx = all.indexOf(el);
-  if (idx === -1) return;
-  const next = all[(idx + 1) % all.length];
-  next.focus();
-  next.select();
+  _essenceJumpNext(el);
 }, true);
-
-document.addEventListener('blur', function(e) {
-  const el = e.target;
+document.addEventListener('keyup', function(e) {
+  if (e.key !== 'Enter') return;
+  var el = e.target;
   if (!el.classList.contains('essence-numpad')) return;
-  saveEssenceNumpadSilent(el);
+  e.preventDefault();
+  e.stopPropagation();
 }, true);
 
 function updateEssenceRow(i, key, val) {
@@ -1655,7 +1668,7 @@ function renderDaily() {
               <button class="btn-counter" onclick="adjustDaily('${f.key}',-1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">−</button>
               <input type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" class="cell-input daily-numpad" data-key="${f.key}"
                 style="width:56px;text-align:center;font-size:1rem;font-weight:800;color:${f.color};background:transparent;border-color:${f.color}55;padding:4px 4px"
-                value="${rec[f.key]||0}">
+                value="${rec[f.key]||0}" onfocus="this.select()">
               <button class="btn-counter" onclick="adjustDaily('${f.key}',1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">＋</button>
             </div>
           `).join('')}
@@ -1677,7 +1690,7 @@ function renderDaily() {
               <button class="btn-counter" onclick="adjustDaily('${f.key}',-1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">−</button>
               <input type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" class="cell-input daily-numpad" data-key="${f.key}"
                 style="width:56px;text-align:center;font-size:1rem;font-weight:800;color:${f.color};background:transparent;border-color:${f.color}55;padding:4px 4px"
-                value="${rec[f.key]||0}">
+                value="${rec[f.key]||0}" onfocus="this.select()">
               <button class="btn-counter" onclick="adjustDaily('${f.key}',1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">＋</button>
             </div>
           `).join('')}
@@ -1718,26 +1731,49 @@ function saveDailyNumpadSilent(el) {
   saveLocal();
 }
 
+function _dailyJumpNext(el) {
+  saveDailyNumpadSilent(el);
+  var all = Array.from(document.querySelectorAll('.daily-numpad'));
+  var idx = all.indexOf(el);
+  if (idx === -1) return;
+  var next = all[(idx + 1) % all.length];
+  setTimeout(function() { next.focus(); next.select(); }, 0);
+}
 document.addEventListener('keydown', function(e) {
   if (e.key !== 'Enter' && e.key !== 'Tab') return;
-  const el = e.target;
+  var el = e.target;
   if (!el.classList.contains('daily-numpad')) return;
   e.preventDefault();
   e.stopPropagation();
-  saveDailyNumpadSilent(el);
-  const all = Array.from(document.querySelectorAll('.daily-numpad'));
-  const idx = all.indexOf(el);
-  if (idx === -1) return;
-  const next = all[(idx + 1) % all.length];
-  next.focus();
-  next.select();
+  _dailyJumpNext(el);
 }, true);
-
+document.addEventListener('keyup', function(e) {
+  if (e.key !== 'Enter') return;
+  var el = e.target;
+  if (!el.classList.contains('daily-numpad')) return;
+  e.preventDefault();
+  e.stopPropagation();
+}, true);
 document.addEventListener('blur', function(e) {
-  const el = e.target;
+  var el = e.target;
   if (!el.classList.contains('daily-numpad')) return;
   saveDailyNumpadSilent(el);
 }, true);
+
+// Android IME Enter 有時以 insertLineBreak inputType 觸發 input 事件
+document.addEventListener('input', function(e) {
+  if (e.inputType !== 'insertLineBreak' && e.inputType !== 'insertParagraph') return;
+  var el = e.target;
+  if (el.classList.contains('essence-numpad')) {
+    e.preventDefault();
+    el.value = el.value.replace(/[^0-9]/g, '');
+    _essenceJumpNext(el);
+  } else if (el.classList.contains('daily-numpad')) {
+    e.preventDefault();
+    el.value = el.value.replace(/[^0-9]/g, '');
+    _dailyJumpNext(el);
+  }
+});
 
 function updateDailyLimit(key, val) {
   if (!state.dailyLimits) state.dailyLimits = { mushCount: 3, raidCount: 1, sensorCount: 1 };
