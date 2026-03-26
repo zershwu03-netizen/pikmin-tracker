@@ -1,0 +1,1821 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌿 皮克敏追蹤器</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2333;
+    --surface3: #21262d;
+    --border: #30363d;
+    --accent: #3fb950;
+    --accent2: #58a6ff;
+    --accent3: #f0883e;
+    --accent4: #bc8cff;
+    --accent5: #ff7b72;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #656d76;
+    --yellow: #d29922;
+    --green-bg: #1a3a1a;
+    --green-text: #3fb950;
+    --yellow-bg: #332d00;
+    --yellow-text: #d29922;
+    --white-bg: #1c2333;
+    --input-bg: #0d1117;
+    --radius: 12px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', 'M PLUS Rounded 1c', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── Header ─── */
+  header {
+    background: linear-gradient(135deg, #0d2a1a 0%, #0d1a2a 50%, #1a0d2a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+  .logo { font-size: 1.5rem; font-weight: 900; display: flex; align-items: center; gap: 10px; }
+  .logo span { background: linear-gradient(135deg, #3fb950, #58a6ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+  /* ─── Account Selector ─── */
+  .account-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .account-tabs { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+  .account-tab {
+    padding: 6px 16px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--surface2); cursor: pointer; font-size: 0.85rem; font-weight: 700;
+    transition: all 0.2s; color: var(--text2);
+  }
+  .account-tab.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .account-tab:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+  .btn-add-acct {
+    padding: 6px 14px; border-radius: 20px; border: 1px dashed var(--border);
+    background: transparent; cursor: pointer; font-size: 0.85rem; color: var(--text3);
+    transition: all 0.2s; font-family: inherit;
+  }
+  .btn-add-acct:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ─── Nav Tabs ─── */
+  .nav-tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--surface); padding: 0 24px; gap: 0; overflow-x: auto;
+  }
+  .nav-tab {
+    padding: 14px 20px; cursor: pointer; font-weight: 700; font-size: 0.9rem;
+    color: var(--text2); border-bottom: 3px solid transparent; transition: all 0.2s;
+    white-space: nowrap; display: flex; align-items: center; gap: 6px;
+  }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .nav-tab:hover:not(.active) { color: var(--text); }
+
+  /* ─── Main Content ─── */
+  main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ─── Cards & Tables ─── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 1rem; font-weight: 800; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px; color: var(--text);
+  }
+  .card-title .icon { font-size: 1.2rem; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th {
+    background: var(--surface3); padding: 10px 12px; text-align: left;
+    font-weight: 800; color: var(--text2); font-size: 0.8rem; letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  /* Color coding */
+  .cell-white input, .cell-white { background: var(--white-bg); }
+  .cell-green { background: var(--green-bg); color: var(--green-text); font-weight: 700; }
+  .cell-yellow { background: var(--yellow-bg); color: var(--yellow-text); font-weight: 700; }
+  .cell-input {
+    background: var(--input-bg); border: 1px solid var(--border); color: var(--text);
+    padding: 6px 10px; border-radius: 6px; width: 100%; font-family: inherit;
+    font-size: 0.88rem; transition: border-color 0.2s;
+  }
+  .cell-input:focus { outline: none; border-color: var(--accent2); }
+  .flower-name { font-weight: 800; }
+
+  /* ─── Legend ─── */
+  .legend { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text2); }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+  /* ─── Account Daily Record ─── */
+  .daily-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;
+  }
+  .daily-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px;
+  }
+  .daily-item label { font-size: 0.78rem; color: var(--text2); font-weight: 700; margin-bottom: 8px; display: block; }
+  .daily-item .val { font-size: 1.4rem; font-weight: 900; color: var(--text); }
+  .counter-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .btn-counter {
+    width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface3); color: var(--text); cursor: pointer; font-size: 1.1rem;
+    font-weight: 900; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; font-family: inherit;
+  }
+  .btn-counter:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+  .counter-num { font-size: 1.6rem; font-weight: 900; min-width: 36px; text-align: center; }
+  .toggle-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .toggle-btn {
+    padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface3); cursor: pointer; font-size: 0.8rem; font-weight: 700;
+    transition: all 0.2s; font-family: inherit; color: var(--text2);
+  }
+  .toggle-btn.yes { background: var(--green-bg); color: var(--green-text); border-color: var(--accent); }
+  .toggle-btn.no { background: #2a1a1a; color: var(--accent5); border-color: var(--accent5); }
+  select.cell-input { cursor: pointer; }
+
+  /* ─── Mushroom Points ─── */
+  .mushroom-list { display: flex; flex-direction: column; gap: 10px; }
+  .mushroom-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: center;
+  }
+  .mushroom-coord { font-family: monospace; font-size: 0.85rem; color: var(--accent2); font-weight: 700; }
+  .mushroom-timer { font-weight: 800; color: var(--accent3); font-size: 1.05rem; }
+  .mushroom-timer.expired { color: var(--accent5); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .mushroom-acct { font-size: 0.8rem; color: var(--text2); }
+  .btn-del {
+    background: transparent; border: 1px solid var(--border); color: var(--text3);
+    width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;
+    transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+  }
+  .btn-del:hover { background: #2a1a1a; color: var(--accent5); border-color: var(--accent5); }
+
+  /* ─── Form Row ─── */
+  .form-row {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; margin-bottom: 16px;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group label { font-size: 0.75rem; color: var(--text2); font-weight: 700; }
+  .form-group input, .form-group select {
+    background: var(--input-bg); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 12px; border-radius: 8px; font-family: inherit; font-size: 0.88rem;
+    min-width: 120px;
+  }
+  .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent2); }
+  .btn-primary {
+    background: var(--accent); color: #000; border: none; padding: 9px 20px;
+    border-radius: 8px; cursor: pointer; font-weight: 800; font-family: inherit;
+    font-size: 0.88rem; transition: all 0.2s; align-self: flex-end;
+  }
+  .btn-primary:hover { background: #4ac760; transform: translateY(-1px); }
+
+  /* ─── Flower planting ─── */
+  .flower-result {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; margin-top: 16px;
+  }
+  .result-row { display: flex; justify-content: space-between; padding: 8px 0;
+    border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  .result-row:last-child { border-bottom: none; }
+  .result-label { color: var(--text2); }
+  .result-val { font-weight: 800; color: var(--accent); font-size: 1.05rem; }
+
+  /* ─── Utility ─── */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 12px;
+    font-size: 0.72rem; font-weight: 800;
+  }
+  .badge-green { background: var(--green-bg); color: var(--green-text); }
+  .badge-yellow { background: var(--yellow-bg); color: var(--yellow-text); }
+  .badge-blue { background: #0d2040; color: var(--accent2); }
+
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .section-title { font-size: 1.3rem; font-weight: 900; }
+
+  .empty-state { text-align: center; padding: 40px; color: var(--text3); font-size: 0.9rem; }
+
+  /* ─── Scrollbar ─── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px; min-width: 320px; max-width: 90vw;
+  }
+  .modal h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 16px; }
+  .modal input {
+    width: 100%; background: var(--input-bg); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 14px; border-radius: 8px;
+    font-family: inherit; font-size: 0.9rem; margin-bottom: 14px;
+  }
+  .modal input:focus { outline: none; border-color: var(--accent2); }
+  .modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+  .btn-secondary {
+    background: transparent; border: 1px solid var(--border); color: var(--text2);
+    padding: 8px 18px; border-radius: 8px; cursor: pointer; font-family: inherit;
+    font-weight: 700; transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--text); color: var(--text); }
+
+  .tabs-inner { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab-inner {
+    padding: 5px 14px; border-radius: 16px; border: 1px solid var(--border);
+    background: var(--surface2); cursor: pointer; font-size: 0.82rem; font-weight: 700;
+    color: var(--text2); transition: all 0.2s;
+  }
+  .tab-inner.active { background: var(--accent2); color: #000; border-color: var(--accent2); }
+
+  .info-tip { font-size: 0.75rem; color: var(--text3); margin-top: 4px; }
+
+  @media(max-width:600px){
+    main { padding: 12px; }
+    .mushroom-item { grid-template-columns: 1fr auto; }
+    .daily-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ─── Context Menu ─── */
+  .ctx-menu {
+    position: fixed; z-index: 500;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 6px; min-width: 160px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    display: none; animation: fadeIn 0.12s ease;
+  }
+  .ctx-menu.open { display: block; }
+  @keyframes fadeIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+  .ctx-item {
+    padding: 9px 14px; border-radius: 7px; cursor: pointer;
+    font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 8px;
+    transition: background 0.15s; color: var(--text);
+  }
+  .ctx-item:hover { background: var(--surface3); }
+  .ctx-item.danger { color: var(--accent5); }
+  .ctx-item.danger:hover { background: #2a1a1a; }
+  .ctx-divider { height: 1px; background: var(--border); margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">🌿 <span>皮克敏追蹤器</span></div>
+  <div style="font-size:0.8rem;color:var(--text3)" id="clock"></div>
+</header>
+
+<!-- Account Bar -->
+<div class="account-bar">
+  <div style="font-size:0.8rem;color:var(--text2);font-weight:700">帳號：</div>
+  <div class="account-tabs" id="accountTabs"></div>
+  <button class="btn-add-acct" onclick="openAddAccount()">＋ 新增帳號</button>
+</div>
+
+<!-- Nav Tabs -->
+<div class="nav-tabs">
+  <div class="nav-tab active" data-tab="essence" onclick="switchTab('essence')">✨ 精華計算</div>
+  <div class="nav-tab" data-tab="daily" onclick="switchTab('daily')">📅 帳號紀錄</div>
+  <div class="nav-tab" data-tab="mushroom" onclick="switchTab('mushroom')">🍄 菇點紀錄</div>
+  <div class="nav-tab" data-tab="flower" onclick="switchTab('flower')">🌸 種花紀錄</div>
+</div>
+
+<!-- Main -->
+<main>
+
+<!-- ══════ 1. 精華計算 ══════ -->
+<div class="section active" id="tab-essence">
+  <div class="section-header">
+    <div class="section-title">✨ 精華計算器</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-secondary" onclick="openCopyFrom()" title="從其他帳號複製花種清單">📋 從其他帳號複製</button>
+      <button class="btn-secondary" onclick="openImportModal()" title="匯入花種清單">📥 匯入</button>
+      <button class="btn-secondary" onclick="exportEssence()" title="匯出花種清單">📤 匯出</button>
+      <button class="btn-secondary" onclick="saveAsDefault()" title="儲存為預設清單">⭐ 存為預設</button>
+      <button class="btn-secondary" onclick="loadDefault()" title="載入預設清單" id="btnLoadDefault" style="display:none">🔄 載入預設</button>
+      <button class="btn-primary" onclick="addEssenceRow()">＋ 新增花種</button>
+    </div>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#1c2333;border:1px solid #30363d"></div>手動輸入</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#1a3a1a"></div>參數（可修改）</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#332d00"></div>自動計算</div>
+  </div>
+  <div class="card">
+    <div style="overflow-x:auto">
+      <table id="essenceTable">
+        <thead>
+          <tr>
+            <th>花種名稱</th>
+            <th>精華多 <span class="badge badge-blue">輸入</span></th>
+            <th>精華上限 <span class="badge badge-green">參數</span></th>
+            <th>精華需要餵 <span class="badge badge-yellow">計算</span></th>
+            <th>花上限 <span class="badge badge-green">參數</span></th>
+            <th>花有 <span class="badge badge-blue">輸入</span></th>
+            <th>花可收 <span class="badge badge-yellow">計算</span></th>
+            <th>需消耗 <span class="badge badge-yellow">計算</span></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="essenceBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <p class="info-tip">💡 精華需要餵 = 精華多 − 精華上限　｜　花可收 = 花上限 − 花有　｜　需消耗 = 精華需要餵 − 花可收</p>
+</div>
+
+<!-- ══════ 2. 帳號紀錄 ══════ -->
+<div class="section" id="tab-daily">
+  <div class="section-header">
+    <div class="section-title">📅 帳號紀錄</div>
+    <div style="font-size:0.8rem;color:var(--text3)" id="todayDate"></div>
+  </div>
+  <!-- 內部分頁 -->
+  <div class="tabs-inner" style="margin-bottom:16px">
+    <div class="tab-inner active" id="dailyTabSingle" onclick="switchDailyTab('single')">👤 個別帳號</div>
+    <div class="tab-inner" id="dailyTabOverview" onclick="switchDailyTab('overview')">📊 總覽</div>
+  </div>
+  <div id="dailySingleContent"></div>
+  <div id="dailyOverviewContent" style="display:none"></div>
+</div>
+
+<!-- ══════ 3. 菇點紀錄 ══════ -->
+<div class="section" id="tab-mushroom">
+  <div class="section-header">
+    <div class="section-title">🍄 菇點紀錄</div>
+  </div>
+
+  <!-- 新增菇點表單 -->
+  <div class="form-row" style="flex-direction:column;gap:14px">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:0.82rem;color:var(--text2);font-weight:700">登錄模式：</span>
+      <button class="toggle-btn yes" id="modeAccountBtn" onclick="setMushMode('account')">👤 帳號卡菇</button>
+      <button class="toggle-btn" id="modeResetBtn" onclick="setMushMode('reset')">🕓 無人卡（重置計算）</button>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div class="form-group">
+        <label>座標</label>
+        <input id="mush-coord" placeholder="例：35.12, 139.45" style="width:160px">
+      </div>
+      <div class="form-group">
+        <label>地點名稱</label>
+        <input id="mush-name" placeholder="例：台北火車站">
+      </div>
+
+      <!-- 帳號卡菇模式 -->
+      <div id="modeAccountFields" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div class="form-group">
+          <label>卡菇帳號</label>
+          <select id="mush-acct"></select>
+        </div>
+        <div class="form-group">
+          <label>剩餘天數</label>
+          <input id="mush-days" type="number" min="0" value="0" style="width:72px">
+        </div>
+        <div class="form-group">
+          <label>剩餘小時</label>
+          <input id="mush-hours" type="number" min="0" max="23" value="0" style="width:72px">
+        </div>
+        <div class="form-group">
+          <label>剩餘分鐘</label>
+          <input id="mush-mins" type="number" min="0" max="59" value="0" style="width:72px">
+        </div>
+      </div>
+
+      <!-- 重置計算模式 -->
+      <div id="modeResetFields" style="display:none;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div class="form-group">
+          <div style="font-size:0.82rem;font-weight:700;color:var(--accent2)">🕐 按下「登錄菇點」時自動記錄當下台灣時間</div>
+          <div class="info-tip">系統自動計算到下一個台灣時間 04:00 的倒數</div>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="addMushroom()">登錄菇點</button>
+    </div>
+  </div>
+
+  <!-- 活躍菇點 -->
+  <div style="font-size:0.85rem;font-weight:800;color:var(--text2);margin-bottom:10px">🍄 活躍菇點</div>
+  <div class="mushroom-list" id="mushroomList">
+    <div class="empty-state">尚無活躍菇點 🍄</div>
+  </div>
+
+  <!-- 封存菇點 -->
+  <div style="margin-top:24px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;cursor:pointer" onclick="toggleArchive()">
+      <div style="font-size:0.85rem;font-weight:800;color:var(--text3)">📦 已重置菇點 <span id="archiveCount"></span></div>
+      <span id="archiveArrow" style="color:var(--text3);font-size:0.8rem">▶ 展開</span>
+    </div>
+    <div id="mushroomArchive" style="display:none">
+      <div class="mushroom-list" id="mushroomArchiveList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 菇點編輯 Modal -->
+<div class="modal-overlay" id="mushroomEditModal">
+  <div class="modal" style="min-width:320px">
+    <h3>✏️ 編輯菇點</h3>
+    <input type="hidden" id="edit-mush-id">
+    <div class="form-group" style="margin-bottom:12px">
+      <label style="font-size:0.8rem;font-weight:700;margin-bottom:6px;display:block">座標</label>
+      <input id="edit-mush-coord" class="cell-input" placeholder="例：35.12, 139.45" style="width:100%">
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label style="font-size:0.8rem;font-weight:700;margin-bottom:6px;display:block">地點名稱</label>
+      <input id="edit-mush-name" class="cell-input" placeholder="例：台北火車站" style="width:100%">
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label style="font-size:0.8rem;font-weight:700;margin-bottom:6px;display:block">卡菇帳號</label>
+      <select id="edit-mush-acct" class="cell-input" style="width:100%"></select>
+    </div>
+    <div id="edit-mush-timer-row">
+      <div class="form-group" style="margin-bottom:12px">
+        <label style="font-size:0.8rem;font-weight:700;margin-bottom:6px;display:block">剩餘時間</label>
+        <div id="edit-mush-current-timer" style="font-size:0.82rem;color:var(--accent3);margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="form-group">
+            <label style="font-size:0.72rem;color:var(--text3)">天</label>
+            <input id="edit-mush-days" type="number" min="0" value="0" class="cell-input" style="width:72px">
+          </div>
+          <div class="form-group">
+            <label style="font-size:0.72rem;color:var(--text3)">小時</label>
+            <input id="edit-mush-hours" type="number" min="0" max="23" value="0" class="cell-input" style="width:72px">
+          </div>
+          <div class="form-group">
+            <label style="font-size:0.72rem;color:var(--text3)">分鐘</label>
+            <input id="edit-mush-mins" type="number" min="0" max="59" value="0" class="cell-input" style="width:72px">
+          </div>
+        </div>
+        <div class="info-tip">修改後從現在起重新倒數；不修改請保持原值不動</div>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeMushroomEdit()">取消</button>
+      <button class="btn-primary" onclick="saveMushroomEdit()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ 4. 種花紀錄 ══════ -->
+<div class="section" id="tab-flower">
+  <div class="section-header">
+    <div class="section-title">🌸 種花計算器</div>
+  </div>
+
+  <!-- Step 1: 打點紀錄 -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📝</span>Step 1 — 逐點登錄</div>
+    <p style="font-size:0.82rem;color:var(--text2);margin-bottom:14px">
+      每次看到數字就記一筆，系統自動計算每段參數。<br>
+      <span style="color:var(--text3)">例：13:13 / 208朵花 / 小花0 → 13:30 / 116朵花 / 小花5032 → ...</span>
+    </p>
+    <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <div class="form-group">
+        <label>🐾 本次皮克敏數 <span class="badge badge-green">參數</span></label>
+        <input id="fl-pikmin" type="number" min="1" placeholder="例：32" style="width:100px">
+      </div>
+      <div style="font-size:0.78rem;color:var(--text3);padding-bottom:6px">換花時可修改此數字再繼續打點</div>
+    </div>
+    <div class="form-row" style="margin-bottom:0;flex-wrap:wrap;gap:10px;align-items:flex-end">
+      <div class="form-group">
+        <label>時間</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="fl-pt-time" type="time" style="width:110px">
+          <button class="btn-secondary" onclick="fillFlowerTimeNow()" style="padding:6px 10px;font-size:0.78rem;white-space:nowrap">🕐 現在</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>當下花朵數</label>
+        <input id="fl-pt-flowers" type="number" min="0" placeholder="例：208" style="width:100px">
+      </div>
+      <div class="form-group">
+        <label>累積小花數</label>
+        <input id="fl-pt-mini" type="number" min="0" placeholder="例：0" style="width:110px">
+      </div>
+      <div class="form-group" style="justify-content:flex-end">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-bottom:0">
+          <input type="checkbox" id="fl-pt-swap" style="width:16px;height:16px;accent-color:var(--accent2)">
+          <span style="color:var(--accent2);font-weight:700;font-size:0.82rem">🔄 換花點</span>
+        </label>
+        <div class="info-tip">勾選後此點不計入消耗</div>
+      </div>
+      <button class="btn-primary" onclick="addFlowerPoint()">＋ 新增打點</button>
+      <button class="btn-secondary" onclick="clearFlowerPoints()" style="font-size:0.8rem">清除全部</button>
+    </div>
+    <div id="flowerPointsArea" style="margin-top:16px;display:none">
+      <div style="overflow-x:auto">
+        <table id="flowerPointsTable">
+          <thead><tr>
+            <th>時間</th><th>花朵數</th><th>累積小花</th><th>皮克敏</th>
+            <th style="color:var(--accent3)">消耗花</th>
+            <th style="color:var(--accent)">段落小花</th>
+            <th style="color:var(--accent2)">每花產出</th>
+            <th style="color:var(--accent4)">每分鐘</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="flowerPointsBody"></tbody>
+        </table>
+      </div>
+      <div id="flowerPointsSummary" style="margin-top:14px;padding:14px;background:var(--surface3);border-radius:10px;border:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <div style="font-size:0.82rem;font-weight:800;color:var(--text2)">📊 整段總結</div>
+          <button class="btn-primary" onclick="saveFlowerSession()" style="font-size:0.8rem;padding:6px 14px">💾 儲存為參數紀錄</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px" id="flowerPointsSummaryContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: 預測 -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🎯</span>Step 2 — 預測目標</div>
+    <p style="font-size:0.82rem;color:var(--text2);margin-bottom:14px">根據歷史參數，輸入皮克敏數和目前小花數量，計算種到目標需要多少花、多少時間。</p>
+    <div class="form-row" style="margin-bottom:0;flex-wrap:wrap;gap:14px">
+      <div class="form-group">
+        <label>🐾 皮克敏數量</label>
+        <input id="fl-pred-pikmin" type="number" min="1" placeholder="例：32" style="width:100px">
+        <div class="info-tip">自動抓同數量的平均參數</div>
+      </div>
+      <div class="form-group">
+        <label>🌸 目前小花數量</label>
+        <input id="fl-pred-miniflowers" type="number" min="0" placeholder="例：1000" style="width:110px">
+      </div>
+      <div class="form-group">
+        <label>🎯 目標小花數量</label>
+        <input id="fl-target" type="number" min="1" value="15000" style="width:110px">
+      </div>
+      <div class="form-group">
+        <label>開始時間（選填）</label>
+        <input id="fl-predict-start" type="time">
+      </div>
+      <button class="btn-primary" onclick="calcFlowerPredict()" style="align-self:flex-end">預測</button>
+    </div>
+  </div>
+
+  <!-- 預測結果 -->
+  <div id="flowerPredictResult" style="display:none">
+    <div class="card" id="flowerPredictSummary"></div>
+  </div>
+
+  <!-- 歷史紀錄 -->
+  <div class="card" id="flowerHistoryCard" style="display:none">
+    <div class="card-title"><span class="icon">📅</span>種花歷史紀錄</div>
+    <div style="overflow-x:auto">
+      <table id="flowerHistoryTable">
+        <thead><tr>
+          <th>日期時間</th><th>皮克敏</th><th>開始花</th><th>結束花</th>
+          <th>消耗花</th><th>種出小花</th><th>經過分鐘</th>
+          <th style="color:var(--accent2)">每花產出</th>
+          <th style="color:var(--accent4)">每分鐘</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="flowerHistoryBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</main>
+
+<!-- Add Account Modal -->
+<div class="modal-overlay" id="addAccountModal">
+  <div class="modal">
+    <h3>➕ 新增帳號</h3>
+    <input id="newAccountName" placeholder="帳號名稱（例：帳號A）" onkeydown="if(event.key==='Enter')confirmAddAccount()">
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn-primary" onclick="confirmAddAccount()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rename Account Modal -->
+<div class="modal-overlay" id="renameAccountModal">
+  <div class="modal">
+    <h3>✏️ 重新命名帳號</h3>
+    <input id="renameAccountInput" placeholder="新帳號名稱" onkeydown="if(event.key==='Enter')confirmRename()">
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeRenameModal()">取消</button>
+      <button class="btn-primary" onclick="confirmRename()">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- Copy From Modal -->
+<div class="modal-overlay" id="copyFromModal">
+  <div class="modal">
+    <h3>📋 從其他帳號複製花種清單</h3>
+    <p style="font-size:0.82rem;color:var(--text2);margin-bottom:12px">選擇來源帳號，花種名稱與參數（上限）將複製過來，數量欄位會清空。</p>
+    <div id="copyFromList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px"></div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="document.getElementById('copyFromModal').classList.remove('open')">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal" style="min-width:360px">
+    <h3>📥 匯入花種清單</h3>
+    <p style="font-size:0.82rem;color:var(--text2);margin-bottom:10px">貼上由「匯出」產生的文字，或手動輸入（每行一個花種）：</p>
+    <p style="font-size:0.78rem;color:var(--text3);margin-bottom:10px">格式：<code style="background:var(--surface3);padding:2px 6px;border-radius:4px">花種名稱,精華上限,花上限</code></p>
+    <textarea id="importText" style="width:100%;height:160px;background:var(--input-bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-family:monospace;font-size:0.82rem;resize:vertical" placeholder="例：&#10;紅色雪花蓮,250,400&#10;黃色金魚草,250,400&#10;櫻花,250,500"></textarea>
+    <div style="display:flex;gap:8px;align-items:center;margin:10px 0">
+      <input type="checkbox" id="importMerge" style="width:auto">
+      <label for="importMerge" style="font-size:0.82rem;color:var(--text2)">合併（保留現有花種，只新增沒有的）</label>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="document.getElementById('importModal').classList.remove('open')">取消</button>
+      <button class="btn-primary" onclick="confirmImport()">匯入</button>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item" onclick="ctxRename()">✏️ 重新命名</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item danger" onclick="ctxDelete()">🗑️ 刪除帳號</div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────
+const STATE_KEY = 'pikmin_tracker_v3';
+let state = load();
+
+function load() {
+  try {
+    const s = localStorage.getItem(STATE_KEY);
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  return {
+    accounts: ['帳號A', '帳號B'],
+    currentAccount: '帳號A',
+    essenceRows: {}, // per-account
+    essenceParams: {}, // per-account: [{name, essenceLimit, flowerLimit}]
+    dailyRecords: {}, // per-account per-date
+    mushrooms: [], // global list
+    flowerRows: {}, // per-account
+    flowerParams: {}, // per-account pikminCount
+    flowerHistory: {}, // per-account array of batches
+  };
+}
+
+function save() { try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e){} }
+
+// ─── Clock ────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleString('zh-TW');
+  // Update mushroom timers
+  updateMushroomTimers();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── Tab Navigation ───────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  if (tab === 'daily') { renderDaily(); if (dailyTab==='overview') renderDailyOverview(); }
+  if (tab === 'mushroom') renderMushrooms();
+  if (tab === 'flower') renderFlower();
+  if (tab === 'essence') renderEssence();
+}
+
+// ─── Account Management ───────────────────────────────────
+function renderAccounts() {
+  const tabs = document.getElementById('accountTabs');
+  tabs.innerHTML = '';
+  state.accounts.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'account-tab' + (a === state.currentAccount ? ' active' : '');
+    btn.textContent = a;
+    btn.title = '右鍵或長按可編輯／刪除';
+    btn.onclick = () => { state.currentAccount = a; save(); renderAccounts(); switchTab(getCurrentTab()); };
+    // Right-click → context menu
+    btn.oncontextmenu = (e) => { e.preventDefault(); openCtxMenu(e, a); };
+    // Long-press for mobile
+    let pressTimer;
+    btn.addEventListener('touchstart', e => { pressTimer = setTimeout(() => { openCtxMenu(e.touches[0], a); }, 500); }, {passive:true});
+    btn.addEventListener('touchend', () => clearTimeout(pressTimer));
+    btn.addEventListener('touchmove', () => clearTimeout(pressTimer));
+    tabs.appendChild(btn);
+  });
+  updateMushroomAccountSelect();
+}
+
+// ─── Context Menu ─────────────────────────────────────────
+let ctxTarget = null;
+
+function openCtxMenu(e, accountName) {
+  ctxTarget = accountName;
+  const menu = document.getElementById('ctxMenu');
+  menu.classList.add('open');
+  // Disable delete if only 1 account
+  menu.querySelector('.danger').style.opacity = state.accounts.length <= 1 ? '0.3' : '1';
+  menu.querySelector('.danger').style.pointerEvents = state.accounts.length <= 1 ? 'none' : 'auto';
+  // Position
+  const x = e.clientX || e.pageX;
+  const y = e.clientY || e.pageY;
+  menu.style.left = Math.min(x, window.innerWidth - 180) + 'px';
+  menu.style.top = Math.min(y, window.innerHeight - 100) + 'px';
+}
+
+document.addEventListener('click', e => {
+  if (!document.getElementById('ctxMenu').contains(e.target))
+    document.getElementById('ctxMenu').classList.remove('open');
+});
+
+function ctxRename() {
+  document.getElementById('ctxMenu').classList.remove('open');
+  document.getElementById('renameAccountInput').value = ctxTarget;
+  document.getElementById('renameAccountModal').classList.add('open');
+  setTimeout(() => { const inp = document.getElementById('renameAccountInput'); inp.focus(); inp.select(); }, 100);
+}
+
+function ctxDelete() {
+  document.getElementById('ctxMenu').classList.remove('open');
+  if (state.accounts.length <= 1) return;
+  if (!confirm(`確定要刪除帳號「${ctxTarget}」？\n此帳號的所有紀錄將一併刪除。`)) return;
+  // Remove all data for this account
+  delete state.essenceRows[ctxTarget];
+  delete state.dailyRecords[ctxTarget];
+  delete state.flowerHistory[ctxTarget];
+  delete state.flowerParams[ctxTarget];
+  state.mushrooms = state.mushrooms.filter(m => m.acct !== ctxTarget);
+  state.accounts = state.accounts.filter(x => x !== ctxTarget);
+  if (state.currentAccount === ctxTarget) state.currentAccount = state.accounts[0];
+  save(); renderAccounts(); switchTab(getCurrentTab());
+}
+
+function closeRenameModal() { document.getElementById('renameAccountModal').classList.remove('open'); }
+
+function confirmRename() {
+  const newName = document.getElementById('renameAccountInput').value.trim();
+  if (!newName) return;
+  if (newName === ctxTarget) { closeRenameModal(); return; }
+  if (state.accounts.includes(newName)) { alert('帳號名稱已存在'); return; }
+  // Rename all references
+  const idx = state.accounts.indexOf(ctxTarget);
+  state.accounts[idx] = newName;
+  if (state.currentAccount === ctxTarget) state.currentAccount = newName;
+  // Migrate data keys
+  const migrate = (obj) => { if (obj[ctxTarget] !== undefined) { obj[newName] = obj[ctxTarget]; delete obj[ctxTarget]; } };
+  migrate(state.essenceRows);
+  migrate(state.dailyRecords);
+  migrate(state.flowerHistory);
+  migrate(state.flowerParams);
+  state.mushrooms.forEach(m => { if (m.acct === ctxTarget) m.acct = newName; });
+  save(); closeRenameModal(); renderAccounts(); switchTab(getCurrentTab());
+}
+
+function getCurrentTab() {
+  const active = document.querySelector('.nav-tab.active');
+  return active ? active.dataset.tab : 'essence';
+}
+
+function openAddAccount() { document.getElementById('addAccountModal').classList.add('open'); document.getElementById('newAccountName').value=''; setTimeout(()=>document.getElementById('newAccountName').focus(),100); }
+function closeModal() { document.getElementById('addAccountModal').classList.remove('open'); }
+function confirmAddAccount() {
+  const name = document.getElementById('newAccountName').value.trim();
+  if (!name) return;
+  if (state.accounts.includes(name)) { alert('帳號名稱已存在'); return; }
+  state.accounts.push(name);
+  state.currentAccount = name;
+  save(); closeModal(); renderAccounts(); switchTab(getCurrentTab());
+}
+
+// ─── 1. Essence Calculator ────────────────────────────────
+function getEssenceRows() {
+  if (!state.essenceRows[state.currentAccount]) {
+    state.essenceRows[state.currentAccount] = [
+      { name: '紅色雪花蓮', essenceHave: 281, essenceLimit: 250, flowerLimit: 400, flowerHave: 320 },
+      { name: '黃色金魚草', essenceHave: 262, essenceLimit: 250, flowerLimit: 400, flowerHave: 390 },
+    ];
+  }
+  return state.essenceRows[state.currentAccount];
+}
+
+function renderEssence() {
+  const rows = getEssenceRows();
+  const tbody = document.getElementById('essenceBody');
+  tbody.innerHTML = '';
+  rows.forEach((row, i) => {
+    const essenceNeed = row.essenceHave - row.essenceLimit;
+    const flowerCanCollect = row.flowerLimit - row.flowerHave;
+    const needConsume = essenceNeed - flowerCanCollect;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input class="cell-input" value="${row.name}" onchange="updateEssenceRow(${i},'name',this.value)" style="min-width:100px"></td>
+      <td class="cell-white"><input class="cell-input" type="number" value="${row.essenceHave}" onchange="updateEssenceRow(${i},'essenceHave',+this.value)"></td>
+      <td class="cell-green"><input class="cell-input" type="number" value="${row.essenceLimit}" onchange="updateEssenceRow(${i},'essenceLimit',+this.value)" style="background:transparent;border-color:#2d5a2d;color:var(--green-text)"></td>
+      <td class="cell-yellow" style="font-weight:800">${essenceNeed}</td>
+      <td class="cell-green"><input class="cell-input" type="number" value="${row.flowerLimit}" onchange="updateEssenceRow(${i},'flowerLimit',+this.value)" style="background:transparent;border-color:#2d5a2d;color:var(--green-text)"></td>
+      <td class="cell-white"><input class="cell-input" type="number" value="${row.flowerHave}" onchange="updateEssenceRow(${i},'flowerHave',+this.value)"></td>
+      <td class="cell-yellow">${flowerCanCollect}</td>
+      <td class="cell-yellow" style="color:${needConsume > 0 ? 'var(--accent5)' : 'var(--accent)'}">${needConsume}</td>
+      <td><button class="btn-del" onclick="delEssenceRow(${i})">×</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateEssenceRow(i, key, val) {
+  getEssenceRows()[i][key] = val;
+  save();
+  renderEssence();
+}
+
+function addEssenceRow() {
+  getEssenceRows().push({ name: '新花種', essenceHave: 0, essenceLimit: 250, flowerLimit: 400, flowerHave: 0 });
+  save(); renderEssence();
+}
+
+function delEssenceRow(i) {
+  getEssenceRows().splice(i, 1);
+  save(); renderEssence();
+}
+
+// ─── Essence: Copy / Import / Export / Default ────────────
+function openCopyFrom() {
+  const others = state.accounts.filter(a => a !== state.currentAccount);
+  if (others.length === 0) { alert('目前只有一個帳號，無法複製'); return; }
+  const list = document.getElementById('copyFromList');
+  list.innerHTML = others.map(a => {
+    const rows = state.essenceRows[a] || [];
+    return `<button class="btn-secondary" style="text-align:left;padding:10px 14px;border-radius:8px;cursor:pointer" onclick="confirmCopyFrom('${a}')">
+      <div style="font-weight:800;color:var(--text)">${a}</div>
+      <div style="font-size:0.78rem;color:var(--text3);margin-top:3px">${rows.length} 種花：${rows.slice(0,4).map(r=>r.name).join('、')}${rows.length>4?'…':''}</div>
+    </button>`;
+  }).join('');
+  document.getElementById('copyFromModal').classList.add('open');
+}
+
+function confirmCopyFrom(srcAccount) {
+  const src = state.essenceRows[srcAccount] || [];
+  const copied = src.map(r => ({ ...r, essenceHave: 0, flowerHave: 0 }));
+  if (!confirm(`從「${srcAccount}」複製 ${copied.length} 種花種（數量欄位清空）？`)) return;
+  state.essenceRows[state.currentAccount] = copied;
+  save();
+  document.getElementById('copyFromModal').classList.remove('open');
+  renderEssence();
+}
+
+function exportEssence() {
+  const rows = getEssenceRows();
+  if (rows.length === 0) { alert('目前沒有花種可匯出'); return; }
+  const text = rows.map(r => `${r.name},${r.essenceLimit},${r.flowerLimit}`).join('\n');
+  // Copy to clipboard
+  navigator.clipboard.writeText(text).then(() => {
+    alert(`已複製到剪貼簿！（${rows.length} 種花）\n\n${text}`);
+  }).catch(() => {
+    prompt('請手動複製以下內容：', text);
+  });
+}
+
+function openImportModal() {
+  document.getElementById('importText').value = '';
+  document.getElementById('importModal').classList.add('open');
+  setTimeout(() => document.getElementById('importText').focus(), 100);
+}
+
+function confirmImport() {
+  const text = document.getElementById('importText').value.trim();
+  const merge = document.getElementById('importMerge').checked;
+  if (!text) return;
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const parsed = [];
+  const errors = [];
+  lines.forEach((line, i) => {
+    const parts = line.split(',');
+    if (parts.length < 1) return;
+    const name = parts[0].trim();
+    const essenceLimit = parts[1] ? +parts[1].trim() : 250;
+    const flowerLimit = parts[2] ? +parts[2].trim() : 400;
+    if (!name) { errors.push(`第${i+1}行：名稱為空`); return; }
+    parsed.push({ name, essenceLimit, flowerLimit, essenceHave: 0, flowerHave: 0 });
+  });
+  if (errors.length) { alert('部分行格式有誤：\n' + errors.join('\n')); return; }
+  if (merge) {
+    const existing = getEssenceRows();
+    const existingNames = new Set(existing.map(r => r.name));
+    const toAdd = parsed.filter(r => !existingNames.has(r.name));
+    existing.push(...toAdd);
+    alert(`合併完成！新增了 ${toAdd.length} 種花種。`);
+  } else {
+    if (!confirm(`將覆蓋目前的 ${getEssenceRows().length} 種花種，匯入 ${parsed.length} 種？`)) return;
+    state.essenceRows[state.currentAccount] = parsed;
+  }
+  save();
+  document.getElementById('importModal').classList.remove('open');
+  renderEssence();
+}
+
+function saveAsDefault() {
+  const rows = getEssenceRows();
+  if (rows.length === 0) { alert('目前沒有花種可儲存'); return; }
+  const template = rows.map(r => ({ name: r.name, essenceLimit: r.essenceLimit, flowerLimit: r.flowerLimit }));
+  state.defaultEssenceTemplate = template;
+  save();
+  document.getElementById('btnLoadDefault').style.display = '';
+  alert(`已儲存 ${rows.length} 種花為預設清單 ⭐`);
+}
+
+function loadDefault() {
+  const tmpl = state.defaultEssenceTemplate;
+  if (!tmpl || tmpl.length === 0) { alert('尚未設定預設清單'); return; }
+  const merge = confirm(`載入預設清單（${tmpl.length} 種花）？\n\n確定 = 覆蓋目前清單\n取消 = 合併（只新增沒有的）`);
+  const rows = tmpl.map(r => ({ ...r, essenceHave: 0, flowerHave: 0 }));
+  if (merge) {
+    state.essenceRows[state.currentAccount] = rows;
+  } else {
+    const existing = getEssenceRows();
+    const existingNames = new Set(existing.map(r => r.name));
+    existing.push(...rows.filter(r => !existingNames.has(r.name)));
+  }
+  save(); renderEssence();
+}
+
+function checkDefaultBtn() {
+  if (state.defaultEssenceTemplate && state.defaultEssenceTemplate.length > 0)
+    document.getElementById('btnLoadDefault').style.display = '';
+}
+
+// ─── 2. Daily Records ─────────────────────────────────────
+function getTodayKey() { return new Date().toISOString().slice(0,10); }
+
+function getDailyRecord() {
+  const acct = state.currentAccount;
+  const today = getTodayKey();
+  if (!state.dailyRecords[acct]) state.dailyRecords[acct] = {};
+  if (!state.dailyRecords[acct][today]) {
+    state.dailyRecords[acct][today] = {
+      mushCount: 3, raidCount: 1, sensorCount: 1,
+      flowerDone: null, flowerCoins: 0,
+      levelStage1: '', levelStage2: '', levelStage3: '',
+      monthlyStage1: '', monthlyStage2: '', monthlyStage3: '',
+      essenceWhite: 0, essenceYellow: 0, essenceRed: 0, essenceBlue: 0,
+      flowerWhite: 0, flowerYellow: 0, flowerRed: 0, flowerBlue: 0
+    };
+  }
+  const r = state.dailyRecords[acct][today];
+  // migrate old single-essence field
+  if (r.essenceLeft !== undefined && r.essenceWhite === undefined) {
+    r.essenceWhite = r.essenceLeft; delete r.essenceLeft;
+  }
+  if (r.flowerCoins === undefined) r.flowerCoins = 0;
+  if (r.essenceWhite === undefined) { r.essenceWhite = 0; r.essenceYellow = 0; r.essenceRed = 0; r.essenceBlue = 0; }
+  if (r.flowerWhite === undefined) { r.flowerWhite = 0; r.flowerYellow = 0; r.flowerRed = 0; r.flowerBlue = 0; }
+  // migrate old single-stage fields to 3-column
+  if (r.levelStage !== undefined && r.levelStage1 === undefined) {
+    r.levelStage1 = r.levelStage; r.levelStage2 = ''; r.levelStage3 = ''; delete r.levelStage;
+  }
+  if (r.monthlyStage !== undefined && r.monthlyStage1 === undefined) {
+    r.monthlyStage1 = r.monthlyStage; r.monthlyStage2 = ''; r.monthlyStage3 = ''; delete r.monthlyStage;
+  }
+  if (r.levelStage1 === undefined) { r.levelStage1 = ''; r.levelStage2 = ''; r.levelStage3 = ''; }
+  if (r.monthlyStage1 === undefined) { r.monthlyStage1 = ''; r.monthlyStage2 = ''; r.monthlyStage3 = ''; }
+  return r;
+}
+
+let dailyTab = 'single';
+
+function switchDailyTab(tab) {
+  dailyTab = tab;
+  document.getElementById('dailyTabSingle').className = 'tab-inner' + (tab==='single'?' active':'');
+  document.getElementById('dailyTabOverview').className = 'tab-inner' + (tab==='overview'?' active':'');
+  document.getElementById('dailySingleContent').style.display = tab==='single' ? '' : 'none';
+  document.getElementById('dailyOverviewContent').style.display = tab==='overview' ? '' : 'none';
+  if (tab==='overview') renderDailyOverview();
+}
+
+function renderDaily() {
+  document.getElementById('todayDate').textContent = getTodayKey();
+  const rec = getDailyRecord();
+  const acct = state.currentAccount;
+
+  // Mushroom linkage
+  const myMushrooms = state.mushrooms.filter(m => m.acct === acct);
+  const activeMushrooms = myMushrooms.filter(m => m.expireAt > Date.now());
+  const expiredMushrooms = myMushrooms.filter(m => m.expireAt <= Date.now());
+  let mushroomSection = '';
+  if (myMushrooms.length > 0) {
+    mushroomSection = `
+      <div class="daily-item" style="grid-column: 1 / -1; background: ${activeMushrooms.length > 0 ? 'var(--surface2)' : '#2a1a1a'}; border-color: ${activeMushrooms.length > 0 ? 'var(--accent3)' : 'var(--accent5)'}">
+        <label style="color:var(--accent3)">🍄 目前卡菇狀況</label>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+          ${activeMushrooms.map(m => {
+            const rem = m.expireAt - Date.now();
+            const d = Math.floor(rem/86400000);
+            const h = Math.floor((rem%86400000)/3600000);
+            const mn = Math.floor((rem%3600000)/60000);
+            return `<div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface3);padding:7px 10px;border-radius:7px">
+              <span style="font-weight:700">${m.name || m.coord}</span>
+              <span style="color:var(--accent3);font-weight:800;font-size:0.9rem">${d>0?d+'天':''}${h}時${mn}分</span>
+            </div>`;
+          }).join('')}
+          ${expiredMushrooms.length > 0 ? `<div style="font-size:0.78rem;color:var(--accent5)">⚠️ ${expiredMushrooms.length} 個菇點已過期</div>` : ''}
+        </div>
+        <div style="margin-top:8px"><a href="#" onclick="switchTab('mushroom');return false;" style="font-size:0.78rem;color:var(--accent2)">→ 前往菇點紀錄管理</a></div>
+      </div>`;
+  }
+
+  // Flower coin status
+  const coins = rec.flowerCoins || 0;
+  const coinFull = coins >= 60;
+  const coinColor = coinFull ? 'var(--accent)' : coins > 0 ? 'var(--accent3)' : 'var(--text3)';
+  const coinStatus = coinFull ? '✅ 已達上限' : coins > 0 ? `⏳ 還差 ${60 - coins} 枚` : '未開始';
+
+  const el = document.getElementById('dailySingleContent');
+  el.innerHTML = `
+    <div class="daily-grid">
+
+      <!-- 計數器區 -->
+      <div class="daily-item">
+        <label>🍄 可打菇次數</label>
+        <div class="counter-row">
+          <button class="btn-counter" onclick="adjustDaily('mushCount',-1)">−</button>
+          <div class="counter-num">${rec.mushCount}</div>
+          <button class="btn-counter" onclick="adjustDaily('mushCount',1)">＋</button>
+        </div>
+      </div>
+      <div class="daily-item">
+        <label>🆘 可求救次數</label>
+        <div class="counter-row">
+          <button class="btn-counter" onclick="adjustDaily('raidCount',-1)">−</button>
+          <div class="counter-num">${rec.raidCount}</div>
+          <button class="btn-counter" onclick="adjustDaily('raidCount',1)">＋</button>
+        </div>
+      </div>
+      <div class="daily-item">
+        <label>📡 可探測器次數</label>
+        <div class="counter-row">
+          <button class="btn-counter" onclick="adjustDaily('sensorCount',-1)">−</button>
+          <div class="counter-num">${rec.sensorCount}</div>
+          <button class="btn-counter" onclick="adjustDaily('sensorCount',1)">＋</button>
+        </div>
+      </div>
+
+      <!-- 種花＋金幣 -->
+      <div class="daily-item" style="grid-column: span 2">
+        <label>🌸 今日種花金幣</label>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:8px;flex-wrap:wrap">
+          <div class="counter-row">
+            <button class="btn-counter" onclick="adjustDaily('flowerCoins',-1)">−</button>
+            <div class="counter-num" style="color:${coinColor};min-width:44px">${coins}</div>
+            <button class="btn-counter" onclick="adjustDaily('flowerCoins',1)">＋</button>
+            <span style="font-size:0.78rem;color:var(--text3);margin-left:2px">/ 60</span>
+          </div>
+          <div style="font-size:0.85rem;font-weight:700;color:${coinColor}">${coinStatus}</div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:0.75rem;color:var(--text2)">快速設定：</span>
+          ${[0,10,20,30,40,50,60].map(v => `<button class="btn-counter" style="width:auto;padding:0 8px;font-size:0.78rem;${rec.flowerCoins===v?'background:var(--accent);color:#000;border-color:var(--accent)':''}" onclick="setFlowerCoins(${v})">${v}</button>`).join('')}
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="toggle-btn ${rec.flowerDone===true?'yes':''}" onclick="setDaily('flowerDone',true)">✅ 全部種完</button>
+          <button class="toggle-btn ${rec.flowerDone===false?'no':''}" onclick="setDaily('flowerDone',false)">❌ 未種</button>
+        </div>
+      </div>
+
+      <!-- 精華剩餘（四色一行） -->
+      <div class="daily-item" style="grid-column: 1 / -1">
+        <label>✨ 精華剩餘數量</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+          <span style="font-size:0.8rem;font-weight:700;color:var(--text2)">✨精華</span>
+          ${[
+            {key:'essenceWhite', label:'白', color:'#e6edf3'},
+            {key:'essenceYellow',label:'黃', color:'#d29922'},
+            {key:'essenceRed',   label:'紅', color:'#ff7b72'},
+            {key:'essenceBlue',  label:'藍', color:'#58a6ff'},
+          ].map(f => `
+            <div style="display:flex;align-items:center;gap:4px">
+              <span style="font-size:0.8rem;font-weight:700;color:${f.color}">${f.label}</span>
+              <button class="btn-counter" onclick="adjustDaily('${f.key}',-1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">−</button>
+              <input type="number" class="cell-input" style="width:60px;text-align:center;font-size:1rem;font-weight:800;color:${f.color};background:transparent;border-color:${f.color}55;padding:4px 6px"
+                value="${rec[f.key]||0}" onchange="setDaily('${f.key}',+this.value)">
+              <button class="btn-counter" onclick="adjustDaily('${f.key}',1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">＋</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- 花朵剩餘（四色一行） -->
+      <div class="daily-item" style="grid-column: 1 / -1">
+        <label>🌸 花朵剩餘數量</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+          <span style="font-size:0.8rem;font-weight:700;color:var(--text2)">🌸花朵</span>
+          ${[
+            {key:'flowerWhite', label:'白', color:'#e6edf3'},
+            {key:'flowerYellow',label:'黃', color:'#d29922'},
+            {key:'flowerRed',   label:'紅', color:'#ff7b72'},
+            {key:'flowerBlue',  label:'藍', color:'#58a6ff'},
+          ].map(f => `
+            <div style="display:flex;align-items:center;gap:4px">
+              <span style="font-size:0.8rem;font-weight:700;color:${f.color}">${f.label}</span>
+              <button class="btn-counter" onclick="adjustDaily('${f.key}',-1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">−</button>
+              <input type="number" class="cell-input" style="width:60px;text-align:center;font-size:1rem;font-weight:800;color:${f.color};background:transparent;border-color:${f.color}55;padding:4px 6px"
+                value="${rec[f.key]||0}" onchange="setDaily('${f.key}',+this.value)">
+              <button class="btn-counter" onclick="adjustDaily('${f.key}',1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">＋</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- 任務 -->
+      <div class="daily-item" style="grid-column: 1 / -1">
+        <label>🎮 等級任務階段</label>
+        <textarea class="cell-input" style="margin-top:6px;height:72px;resize:vertical;line-height:1.5" placeholder="可輸入多行，例：&#10;第3章第2關&#10;支線任務進行中" onchange="setDaily('levelStage1',this.value)">${rec.levelStage1||''}</textarea>
+      </div>
+      <div class="daily-item" style="grid-column: 1 / -1">
+        <label>📆 每月任務階段</label>
+        <textarea class="cell-input" style="margin-top:6px;height:72px;resize:vertical;line-height:1.5" placeholder="可輸入多行，例：&#10;本月第5關&#10;額外任務完成" onchange="setDaily('monthlyStage1',this.value)">${rec.monthlyStage1||''}</textarea>
+      </div>
+
+      ${mushroomSection}
+    </div>
+
+    <div style="margin-top:20px">
+      <div class="card-title" style="font-size:0.85rem;color:var(--text3)">📅 歷史紀錄（全部保留）</div>
+      ${renderDailyHistory()}
+    </div>
+  `;
+}
+
+function renderDailyHistory() {
+  const acct = state.currentAccount;
+  const records = state.dailyRecords[acct] || {};
+  const dates = Object.keys(records).sort().reverse();
+  if (dates.length === 0) return '<div class="empty-state">無歷史紀錄</div>';
+
+  const c = (val, color) => `<span style="color:${color};font-weight:700">${val||0}</span>`;
+
+  return `<div style="overflow-x:auto"><table>
+    <thead>
+      <tr>
+        <th rowspan="2">日期</th>
+        <th rowspan="2">菇</th><th rowspan="2">求救</th><th rowspan="2">探測</th><th rowspan="2">金幣</th>
+        <th style="color:#e6edf3">白精</th><th style="color:#d29922">黃精</th>
+        <th style="color:#ff7b72">紅精</th><th style="color:#58a6ff">藍精</th>
+        <th rowspan="2">🎮 等級任務</th>
+        <th rowspan="2">📆 每月任務</th>
+      </tr>
+      <tr>
+        <th style="color:#e6edf3">白花</th><th style="color:#d29922">黃花</th>
+        <th style="color:#ff7b72">紅花</th><th style="color:#58a6ff">藍花</th>
+      </tr>
+    </thead>
+    <tbody>${dates.map(d => {
+      const r = records[d];
+      const coins = r.flowerCoins || 0;
+      const coinStr = coins >= 60
+        ? `<span style="color:var(--accent);font-weight:800">✅60</span>`
+        : coins > 0 ? `<span style="color:var(--accent3)">${coins}</span>` : '—';
+      const ls = r.levelStage1 ?? r.levelStage ?? '—';
+      const ms = r.monthlyStage1 ?? r.monthlyStage ?? '—';
+      return `
+        <tr>
+          <td rowspan="2" style="white-space:nowrap;font-weight:700">${d}</td>
+          <td rowspan="2">${r.mushCount??'—'}</td>
+          <td rowspan="2">${r.raidCount??'—'}</td>
+          <td rowspan="2">${r.sensorCount??'—'}</td>
+          <td rowspan="2">${coinStr}</td>
+          <td>${c(r.essenceWhite||r.essenceLeft,'#e6edf3')}</td>
+          <td>${c(r.essenceYellow,'#d29922')}</td>
+          <td>${c(r.essenceRed,'#ff7b72')}</td>
+          <td>${c(r.essenceBlue,'#58a6ff')}</td>
+          <td rowspan="2" style="white-space:pre-wrap;max-width:150px;font-size:0.82rem">${ls}</td>
+          <td rowspan="2" style="white-space:pre-wrap;max-width:150px;font-size:0.82rem">${ms}</td>
+        </tr>
+        <tr>
+          <td>${c(r.flowerWhite,'#e6edf3')}</td>
+          <td>${c(r.flowerYellow,'#d29922')}</td>
+          <td>${c(r.flowerRed,'#ff7b72')}</td>
+          <td>${c(r.flowerBlue,'#58a6ff')}</td>
+        </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function renderDailyOverview() {
+  const el = document.getElementById('dailyOverviewContent');
+
+  const allDates = new Set();
+  state.accounts.forEach(acct => {
+    Object.keys(state.dailyRecords[acct] || {}).forEach(d => allDates.add(d));
+  });
+  const dates = [...allDates].sort().reverse();
+
+  if (dates.length === 0) {
+    el.innerHTML = '<div class="empty-state">尚無任何紀錄</div>'; return;
+  }
+
+  const c = (val, color) => `<span style="color:${color};font-weight:700">${val||0}</span>`;
+
+  const html = dates.map(d => {
+    const rows = state.accounts.map(acct => {
+      const r = (state.dailyRecords[acct] || {})[d];
+      if (!r) return `
+        <tr>
+          <td rowspan="2" style="font-weight:800;color:var(--accent2);white-space:nowrap">${acct}</td>
+          <td colspan="9" style="color:var(--text3);font-size:0.8rem">無紀錄</td>
+        </tr><tr></tr>`;
+
+      const coins = r.flowerCoins || 0;
+      const coinStr = coins >= 60
+        ? `<span style="color:var(--accent);font-weight:800">✅60</span>`
+        : coins > 0 ? `<span style="color:var(--accent3)">${coins}</span>` : '—';
+      const ls = r.levelStage1 ?? r.levelStage ?? '';
+      const ms = r.monthlyStage1 ?? r.monthlyStage ?? '';
+      const myMush = state.mushrooms.filter(m => m.acct === acct && m.expireAt > Date.now());
+      const mushStr = myMush.length > 0 ? `<span style="color:var(--accent3)">🍄${myMush.length}</span>` : '—';
+
+      return `
+        <tr>
+          <td rowspan="2" style="font-weight:800;color:var(--accent2);white-space:nowrap">${acct}</td>
+          <td rowspan="2">${r.mushCount??'—'}</td>
+          <td rowspan="2">${r.raidCount??'—'}</td>
+          <td rowspan="2">${r.sensorCount??'—'}</td>
+          <td rowspan="2">${coinStr}</td>
+          <td>${c(r.essenceWhite||r.essenceLeft,'#e6edf3')}</td>
+          <td>${c(r.essenceYellow,'#d29922')}</td>
+          <td>${c(r.essenceRed,'#ff7b72')}</td>
+          <td>${c(r.essenceBlue,'#58a6ff')}</td>
+          <td rowspan="2">${mushStr}</td>
+          <td rowspan="2" style="font-size:0.8rem;white-space:pre-wrap;max-width:120px">${ls||'—'}</td>
+          <td rowspan="2" style="font-size:0.8rem;white-space:pre-wrap;max-width:120px">${ms||'—'}</td>
+        </tr>
+        <tr>
+          <td>${c(r.flowerWhite,'#e6edf3')}</td>
+          <td>${c(r.flowerYellow,'#d29922')}</td>
+          <td>${c(r.flowerRed,'#ff7b72')}</td>
+          <td>${c(r.flowerBlue,'#58a6ff')}</td>
+        </tr>`;
+    }).join('');
+
+    return `<div class="card" style="margin-bottom:14px">
+      <div class="card-title" style="font-size:0.9rem">📅 ${d}</div>
+      <div style="overflow-x:auto"><table>
+        <thead>
+          <tr>
+            <th rowspan="2">帳號</th>
+            <th rowspan="2">菇</th><th rowspan="2">求救</th><th rowspan="2">探測</th><th rowspan="2">金幣</th>
+            <th style="color:#e6edf3">白精</th><th style="color:#d29922">黃精</th>
+            <th style="color:#ff7b72">紅精</th><th style="color:#58a6ff">藍精</th>
+            <th rowspan="2">卡菇</th>
+            <th rowspan="2">等級任務</th><th rowspan="2">每月任務</th>
+          </tr>
+          <tr>
+            <th style="color:#e6edf3">白花</th><th style="color:#d29922">黃花</th>
+            <th style="color:#ff7b72">紅花</th><th style="color:#58a6ff">藍花</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = html;
+}
+
+function setFlowerCoins(v) {
+  const rec = getDailyRecord();
+  rec.flowerCoins = v;
+  if (v >= 60) rec.flowerDone = true; // 自動標記種完
+  save(); renderDaily();
+}
+
+function adjustDaily(key, delta) {
+  const rec = getDailyRecord();
+  const newVal = Math.max(0, (rec[key]||0) + delta);
+  rec[key] = (key === 'flowerCoins') ? Math.min(60, newVal) : newVal;
+  if (key === 'flowerCoins' && rec[key] >= 60) rec.flowerDone = true;
+  save(); renderDaily();
+}
+function setDaily(key, val) {
+  const rec = getDailyRecord();
+  rec[key] = val;
+  if (key === 'flowerCoins' && +val >= 60) rec.flowerDone = true;
+  save(); renderDaily();
+}
+
+// ─── 3. Mushrooms ─────────────────────────────────────────
+let mushMode = 'account'; // 'account' | 'reset'
+
+function fillFlowerTimeNow() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('fl-pt-time').value = `${hh}:${mm}`;
+}
+
+function fillTWNow() {
+  // mush-reset-time field removed, this function is kept for compatibility
+  const el = document.getElementById('mush-reset-time');
+  if (el) {
+    const now = new Date();
+    const twTime = new Date(now.getTime() + 8 * 3600000);
+    el.value = `${String(twTime.getUTCHours()).padStart(2,'0')}:${String(twTime.getUTCMinutes()).padStart(2,'0')}`;
+  }
+}
+
+function setMushMode(mode) {
+  mushMode = mode;
+  document.getElementById('modeAccountFields').style.display = mode === 'account' ? 'flex' : 'none';
+  document.getElementById('modeResetFields').style.display = mode === 'reset' ? 'flex' : 'none';
+  document.getElementById('modeAccountBtn').className = 'toggle-btn' + (mode === 'account' ? ' yes' : '');
+  document.getElementById('modeResetBtn').className = 'toggle-btn' + (mode === 'reset' ? ' yes' : '');
+}
+
+function calcNextReset(inputTimeStr) {
+  // inputTimeStr: "HH:MM" in Taiwan time (UTC+8)
+  // Find next 04:00 Taiwan time from that input time
+  const now = new Date();
+  const [h, m] = inputTimeStr.split(':').map(Number);
+  // Build a Date representing "today in TW at h:m"
+  // TW offset = UTC+8, so TW time = UTC + 8h
+  const utcNow = Date.now();
+  // Use current date in TW
+  const twOffset = 8 * 3600000;
+  const twNow = new Date(utcNow + twOffset);
+  // Set input time on today TW date
+  let candidate = new Date(Date.UTC(twNow.getUTCFullYear(), twNow.getUTCMonth(), twNow.getUTCDate(), h - 8, m, 0));
+  // Next 04:00 TW = 20:00 UTC previous day
+  // 04:00 TW = 04:00 - 8 = -4:00 = 20:00 UTC (day before)
+  let next0400utc = new Date(Date.UTC(twNow.getUTCFullYear(), twNow.getUTCMonth(), twNow.getUTCDate(), 20, 0, 0)); // 04:00 TW next day
+  // If current TW time is before 04:00, next reset is today's 04:00 TW (= yesterday 20:00 UTC? No...)
+  // Simpler: compute TW hour
+  const twHour = twNow.getUTCHours() + 8 < 24 ? twNow.getUTCHours() + 8 : twNow.getUTCHours() + 8 - 24;
+  const twHourInput = h;
+  // Next 04:00 TW from input time
+  // If input time < 04:00 → next reset is same TW date at 04:00
+  // If input time >= 04:00 → next reset is next TW date at 04:00
+  const twDate = new Date(utcNow + twOffset); // current TW date/time as UTC object with TW values
+  let resetTW; // will be a UTC timestamp for next 04:00 TW
+  // Build from candidate date
+  const twYear = twDate.getUTCFullYear();
+  const twMonth = twDate.getUTCMonth();
+  const twDay = twDate.getUTCDate();
+  if (twHourInput < 4) {
+    // next 04:00 is today TW
+    resetTW = Date.UTC(twYear, twMonth, twDay, 4 - 8 + 24, 0, 0); // 04:00 TW = 20:00 UTC prev day... use simpler calc
+    // 04:00 TW = UTC 04:00 - 08:00 = UTC -4 → UTC 20:00 previous day
+    resetTW = Date.UTC(twYear, twMonth, twDay, 0, 0, 0) - twOffset + 4 * 3600000;
+  } else {
+    // next 04:00 is tomorrow TW
+    resetTW = Date.UTC(twYear, twMonth, twDay + 1, 0, 0, 0) - twOffset + 4 * 3600000;
+  }
+  // inputTime as UTC timestamp (today TW date at input time)
+  const inputUTC = Date.UTC(twYear, twMonth, twDay, 0, 0, 0) - twOffset + twHourInput * 3600000 + m * 60000;
+  const remaining = resetTW - inputUTC;
+  return { expireAt: Date.now() + (resetTW - inputUTC), remaining };
+}
+
+function updateMushroomAccountSelect() {
+  const sel = document.getElementById('mush-acct');
+  if (!sel) return;
+  sel.innerHTML = ['（無人卡）', ...state.accounts].map(a => `<option value="${a}">${a}</option>`).join('');
+  sel.value = state.currentAccount;
+}
+
+function addMushroom() {
+  const coord = document.getElementById('mush-coord').value.trim();
+  const name = document.getElementById('mush-name').value.trim();
+  if (!coord && !name) { alert('請填入座標或地點名稱'); return; }
+
+  let expireAt, acct, resetMode = false;
+
+  if (mushMode === 'account') {
+    acct = document.getElementById('mush-acct').value;
+    const days = +document.getElementById('mush-days').value || 0;
+    const hours = +document.getElementById('mush-hours').value || 0;
+    const mins = +document.getElementById('mush-mins').value || 0;
+    expireAt = Date.now() + (days*86400 + hours*3600 + mins*60) * 1000;
+  } else {
+    acct = '（無人卡）';
+    resetMode = true;
+    // 登錄當下自動取台灣時間
+    const twNow = new Date(Date.now() + 8 * 3600000);
+    const timeStr = `${String(twNow.getUTCHours()).padStart(2,'0')}:${String(twNow.getUTCMinutes()).padStart(2,'0')}`;
+    const result = calcNextReset(timeStr);
+    expireAt = result.expireAt;
+  }
+
+  state.mushrooms.push({ id: Date.now(), coord, name, acct, expireAt, resetMode });
+  save();
+  document.getElementById('mush-coord').value = '';
+  document.getElementById('mush-name').value = '';
+  renderMushrooms();
+}
+
+function delMushroom(id) {
+  state.mushrooms = state.mushrooms.filter(m => m.id !== id);
+  save(); renderMushrooms();
+}
+
+function toggleArchive() {
+  const el = document.getElementById('mushroomArchive');
+  const arrow = document.getElementById('archiveArrow');
+  const open = el.style.display === 'none';
+  el.style.display = open ? 'block' : 'none';
+  arrow.textContent = open ? '▼ 收起' : '▶ 展開';
+}
+
+function openMushroomEdit(id) {
+  const m = state.mushrooms.find(x => x.id === id);
+  if (!m) return;
+  document.getElementById('edit-mush-id').value = id;
+  document.getElementById('edit-mush-coord').value = m.coord || '';
+  document.getElementById('edit-mush-name').value = m.name || '';
+  const sel = document.getElementById('edit-mush-acct');
+  sel.innerHTML = ['（無人卡）', ...state.accounts].map(a => `<option value="${a}">${a}</option>`).join('');
+  sel.value = m.acct || '（無人卡）';
+
+  // Pre-fill remaining time
+  const remaining = Math.max(0, m.expireAt - Date.now());
+  const d = Math.floor(remaining / 86400000);
+  const h = Math.floor((remaining % 86400000) / 3600000);
+  const min = Math.floor((remaining % 3600000) / 60000);
+  document.getElementById('edit-mush-days').value = d;
+  document.getElementById('edit-mush-hours').value = h;
+  document.getElementById('edit-mush-mins').value = min;
+
+  // Show current status
+  const timerLabel = remaining <= 0
+    ? '⚠️ 已重置'
+    : `⏳ 目前剩餘：${d>0?d+'天':''}${h}時${min}分`;
+  document.getElementById('edit-mush-current-timer').textContent = timerLabel;
+
+  document.getElementById('mushroomEditModal').classList.add('open');
+}
+
+function closeMushroomEdit() {
+  document.getElementById('mushroomEditModal').classList.remove('open');
+}
+
+function saveMushroomEdit() {
+  const id = +document.getElementById('edit-mush-id').value;
+  const m = state.mushrooms.find(x => x.id === id);
+  if (!m) return;
+  m.coord = document.getElementById('edit-mush-coord').value.trim();
+  m.name  = document.getElementById('edit-mush-name').value.trim();
+  m.acct  = document.getElementById('edit-mush-acct').value;
+  const days  = +document.getElementById('edit-mush-days').value || 0;
+  const hours = +document.getElementById('edit-mush-hours').value || 0;
+  const mins  = +document.getElementById('edit-mush-mins').value || 0;
+  // Always apply timer (pre-filled = keep same, changed = new countdown from now)
+  m.expireAt = Date.now() + (days*86400 + hours*3600 + mins*60) * 1000;
+  m.resetMode = m.acct === '（無人卡）';
+  save(); closeMushroomEdit(); renderMushrooms();
+}
+
+function renderMushrooms() {
+  updateMushroomAccountSelect();
+  const now = Date.now();
+  const active   = state.mushrooms.filter(m => m.expireAt > now);
+  const archived = state.mushrooms.filter(m => m.expireAt <= now);
+
+  // update archive count badge
+  document.getElementById('archiveCount').textContent = archived.length > 0 ? `(${archived.length})` : '';
+
+  const makeCard = (m, isArchived) => {
+    const remaining = m.expireAt - now;
+    const expired = remaining <= 0;
+    const d = Math.floor(remaining / 86400000);
+    const h = Math.floor((remaining % 86400000) / 3600000);
+    const min = Math.floor((remaining % 3600000) / 60000);
+    const timerStr = expired ? '已重置' : `${d>0?d+'天':''}${h}時${min}分`;
+    const isNoAcct = m.resetMode || m.acct === '（無人卡）';
+    const acctColor = isNoAcct ? 'var(--text3)' : 'var(--accent2)';
+    const acctLabel = isNoAcct ? '🕓 無人卡' : `👤 ${m.acct}`;
+    const expireTW = new Date(m.expireAt + 8*3600000);
+    const expireStr = `${String(expireTW.getUTCHours()).padStart(2,'0')}:${String(expireTW.getUTCMinutes()).padStart(2,'0')} TW`;
+
+    return `<div class="mushroom-item" style="${isArchived?'opacity:0.6;background:#1a1a1a':''}">
+      <div>
+        <div class="mushroom-coord">${m.coord || '—'}</div>
+        <div style="font-weight:700;margin-top:2px">${m.name || '—'}</div>
+        <div class="mushroom-acct" style="color:${acctColor};margin-top:2px">${acctLabel}</div>
+      </div>
+      <div>
+        <div style="font-size:0.75rem;color:var(--text3);margin-bottom:2px">${isArchived?'已重置':'剩餘時間'}</div>
+        <div class="mushroom-timer ${expired?'expired':''}">${timerStr}</div>
+        <div style="font-size:0.72rem;color:var(--text3);margin-top:3px">${isArchived?'重置於':'到期：'}${expireStr}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <button class="btn-counter" style="width:auto;padding:0 10px;font-size:0.78rem;color:var(--accent2)" onclick="openMushroomEdit(${m.id})">✏️</button>
+        <button class="btn-del" onclick="delMushroom(${m.id})">×</button>
+      </div>
+    </div>`;
+  };
+
+  // active list
+  const activeList = document.getElementById('mushroomList');
+  if (active.length === 0) {
+    activeList.innerHTML = '<div class="empty-state">尚無活躍菇點 🍄</div>';
+  } else {
+    activeList.innerHTML = active
+      .sort((a,b) => a.expireAt - b.expireAt)
+      .map(m => makeCard(m, false)).join('');
+  }
+
+  // archive list
+  const archiveList = document.getElementById('mushroomArchiveList');
+  if (archived.length === 0) {
+    archiveList.innerHTML = '<div class="empty-state">無封存菇點</div>';
+  } else {
+    archiveList.innerHTML = archived
+      .sort((a,b) => b.expireAt - a.expireAt)
+      .map(m => makeCard(m, true)).join('');
+  }
+}
+
+function updateMushroomTimers() {
+  if (!document.getElementById('tab-mushroom').classList.contains('active')) return;
+  renderMushrooms();
+}
+
+// ─── 4. Flower Calculator ─────────────────────────────────
+let flowerPoints = [];
+
+function getFlowerHistory() {
+  if (!state.flowerHistory[state.currentAccount])
+    state.flowerHistory[state.currentAccount] = [];
+  return state.flowerHistory[state.currentAccount];
+}
+
+function renderFlower() {
+  const params = state.flowerParams[state.currentAccount] || {};
+  if (params.pikmin) document.getElementById('fl-pikmin').value = params.pikmin;
+  renderFlowerPoints();
+  renderFlowerHistory();
+}
+
+function addFlowerPoint() {
+  const time    = document.getElementById('fl-pt-time').value;
+  const flowers = document.getElementById('fl-pt-flowers').value;
+  const mini    = +document.getElementById('fl-pt-mini').value;
+  const pikmin  = +document.getElementById('fl-pikmin').value;
+  const isSwap  = document.getElementById('fl-pt-swap').checked;
+  if (!time)             { alert('請填入時間'); return; }
+  if (!pikmin)           { alert('請填入皮克敏數'); return; }
+  if (flowers === '')    { alert('請填入花朵數'); return; }
+  flowerPoints.push({ time, flowers: +flowers, mini: mini||0, pikmin, isSwap });
+  flowerPoints.sort((a, b) => a.time.localeCompare(b.time));
+  document.getElementById('fl-pt-flowers').value = '';
+  document.getElementById('fl-pt-mini').value = '';
+  document.getElementById('fl-pt-swap').checked = false;
+  renderFlowerPoints();
+}
+
+function delFlowerPoint(i) {
+  flowerPoints.splice(i, 1);
+  renderFlowerPoints();
+}
+
+function clearFlowerPoints() {
+  if (flowerPoints.length > 0 && !confirm('確定清除所有打點？')) return;
+  flowerPoints = [];
+  renderFlowerPoints();
+}
+
+function renderFlowerPoints() {
+  const area = document.getElementById('flowerPointsArea');
+  if (flowerPoints.length === 0) { area.style.display = 'none'; return; }
+  area.style.display = 'block';
+  const tbody = document.getElementById('flowerPointsBody');
+  tbody.innerHTML = '';
+  let totalUsed = 0, totalMini = 0, totalMins = 0, segCount = 0, sumPF = 0, sumPM = 0;
+  flowerPoints.forEach((pt, i) => {
+    let usedCell = '—', miniCell = '—', pfCell = '—', pmCell = '—';
+    let rowStyle = '';
+
+    if (pt.isSwap) {
+      // 換花點：整行標示，不計算
+      usedCell = `<span style="color:var(--accent2);font-weight:700">🔄 換花</span>`;
+      rowStyle = 'background:rgba(88,166,255,0.07)';
+    } else if (i > 0) {
+      // 找前一個非換花點作為計算基準
+      let prevIdx = i - 1;
+      // 如果前一點是換花點，從換花點的花數開始（時間仍用換花點）
+      const prev = flowerPoints[prevIdx];
+      const [ph,pm2] = prev.time.split(':').map(Number);
+      const [ch,cm]  = pt.time.split(':').map(Number);
+      let mins = (ch*60+cm)-(ph*60+pm2);
+      if (mins < 0) mins += 24*60;
+      // 若前一點是換花點，消耗花從換花點花數算起，但時間段正常計
+      const used = prev.flowers - pt.flowers;
+      const mini = pt.mini - prev.mini;
+
+      if (prev.isSwap) {
+        // 換花後第一點：只算小花增量和時間，消耗用換花後帶入的花數減本點
+        if (mini > 0 && mins > 0 && used > 0) {
+          const pf = mini/used, pm = mini/mins;
+          usedCell = used; miniCell = mini.toLocaleString();
+          pfCell = pf.toFixed(1); pmCell = pm.toFixed(1);
+          totalUsed += used; totalMini += mini; totalMins += mins;
+          sumPF += pf; sumPM += pm; segCount++;
+        } else if (mini > 0 && mins > 0) {
+          miniCell = mini.toLocaleString();
+          pmCell = (mini/mins).toFixed(1);
+        }
+      } else if (used > 0 && mini > 0 && mins > 0) {
+        const pf = mini/used, pm = mini/mins;
+        usedCell = used; miniCell = mini.toLocaleString();
+        pfCell = pf.toFixed(1); pmCell = pm.toFixed(1);
+        totalUsed += used; totalMini += mini; totalMins += mins;
+        sumPF += pf; sumPM += pm; segCount++;
+      }
+    }
+
+    const tr = document.createElement('tr');
+    tr.style.cssText = rowStyle;
+    tr.innerHTML = `
+      <td style="font-family:monospace;color:${pt.isSwap?'var(--accent2)':'var(--accent2)'}">${pt.time}${pt.isSwap?' 🔄':''}</td>
+      <td>${pt.flowers}</td>
+      <td style="color:var(--accent)">${pt.mini.toLocaleString()}</td>
+      <td style="color:var(--text2)">${pt.pikmin}</td>
+      <td style="color:var(--accent3)">${usedCell}</td>
+      <td style="color:var(--accent)">${miniCell}</td>
+      <td style="color:var(--accent2);font-weight:700">${pfCell}</td>
+      <td style="color:var(--accent4);font-weight:700">${pmCell}</td>
+      <td><button class="btn-del" onclick="delFlowerPoint(${i})">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+  const avgPF = segCount > 0 ? sumPF/segCount : 0;
+  const avgPM = segCount > 0 ? sumPM/segCount : 0;
+  const stat = (label, val, color) =>
+    `<div style="background:var(--surface2);border-radius:8px;padding:10px 14px;text-align:center;min-width:120px">
+      <div style="font-size:0.72rem;color:var(--text2);margin-bottom:3px">${label}</div>
+      <div style="font-size:1.2rem;font-weight:900;color:${color}">${val}</div>
+    </div>`;
+  document.getElementById('flowerPointsSummaryContent').innerHTML =
+    stat('總消耗花朵', totalUsed, 'var(--accent3)') +
+    stat('總種出小花', totalMini.toLocaleString(), 'var(--accent)') +
+    stat('總時間', totalMins+' 分', 'var(--text)') +
+    (avgPF > 0 ? stat('平均每花產出', avgPF.toFixed(1), 'var(--accent2)') : '') +
+    (avgPM > 0 ? stat('平均每分鐘', avgPM.toFixed(1), 'var(--accent4)') : '');
+}
+
+function saveFlowerSession() {
+  if (flowerPoints.length < 2) { alert('至少需要兩個打點才能儲存'); return; }
+  let totalUsed=0, totalMini=0, totalMins=0, segCount=0, sumPF=0, sumPM=0;
+  for (let i = 1; i < flowerPoints.length; i++) {
+    const prev=flowerPoints[i-1], cur=flowerPoints[i];
+    if (cur.isSwap) continue; // 換花點本身不計算段落
+    const [ph,pm2]=prev.time.split(':').map(Number);
+    const [ch,cm] =cur.time.split(':').map(Number);
+    let mins=(ch*60+cm)-(ph*60+pm2); if(mins<0)mins+=24*60;
+    const used=prev.flowers-cur.flowers, mini=cur.mini-prev.mini;
+    if(used>0&&mini>0&&mins>0){totalUsed+=used;totalMini+=mini;totalMins+=mins;sumPF+=mini/used;sumPM+=mini/mins;segCount++;}
+  }
+  if (segCount === 0) { alert('沒有有效的種花段落'); return; }
+  const pikmin = flowerPoints[0].pikmin;
+  const perFlower = sumPF/segCount, perMinute = sumPM/segCount;
+  getFlowerHistory().unshift({
+    id: Date.now(), date: new Date().toLocaleString('zh-TW'), pikmin,
+    startFlow: flowerPoints[0].flowers, endFlow: flowerPoints[flowerPoints.length-1].flowers,
+    usedFlowers: totalUsed, miniProd: totalMini, mins: totalMins, perFlower, perMinute
+  });
+  if (!state.flowerParams[state.currentAccount]) state.flowerParams[state.currentAccount] = {};
+  Object.assign(state.flowerParams[state.currentAccount], { pikmin, perFlower, perMinute });
+  save(); renderFlowerHistory();
+  const btn = document.querySelector('[onclick="saveFlowerSession()"]');
+  if (btn) { btn.textContent = '✅ 已儲存'; setTimeout(() => btn.textContent = '💾 儲存為參數紀錄', 1500); }
+}
+
+function delFlowerRecord(id) {
+  state.flowerHistory[state.currentAccount] = getFlowerHistory().filter(r => r.id !== id);
+  save(); renderFlowerHistory();
+}
+
+function renderFlowerHistory() {
+  const history = getFlowerHistory();
+  const card = document.getElementById('flowerHistoryCard');
+  const tbody = document.getElementById('flowerHistoryBody');
+  if (history.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  tbody.innerHTML = history.map(r => `
+    <tr>
+      <td style="white-space:nowrap;font-size:0.8rem">${r.date}</td>
+      <td>${r.pikmin}</td><td>${r.startFlow}</td><td>${r.endFlow}</td>
+      <td style="color:var(--accent3)">${r.usedFlowers}</td>
+      <td style="color:var(--accent)">${r.miniProd.toLocaleString()}</td>
+      <td>${r.mins}</td>
+      <td style="color:var(--accent2);font-weight:700">${r.perFlower.toFixed(1)}</td>
+      <td style="color:var(--accent4);font-weight:700">${r.perMinute.toFixed(1)}</td>
+      <td><button class="btn-del" onclick="delFlowerRecord(${r.id})">×</button></td>
+    </tr>`).join('');
+}
+
+function calcFlowerPredict() {
+  const pikmin    = +document.getElementById('fl-pred-pikmin').value;
+  const miniNow   = +document.getElementById('fl-pred-miniflowers').value;
+  const target    = +document.getElementById('fl-target').value || 15000;
+  const startTime = document.getElementById('fl-predict-start').value;
+  if (!pikmin) { alert('請填入皮克敏數量'); return; }
+  const history = getFlowerHistory();
+  const matched = history.filter(r => r.pikmin === pikmin);
+  let params, srcLabel;
+  if (matched.length > 0) {
+    const avgPF = matched.reduce((s,r)=>s+r.perFlower,0)/matched.length;
+    const avgPM = matched.reduce((s,r)=>s+r.perMinute,0)/matched.length;
+    params = { perFlower: avgPF, perMinute: avgPM };
+    srcLabel = matched.length > 1
+      ? `📋 ${pikmin} 隻共 ${matched.length} 筆平均（每花 ${avgPF.toFixed(1)}、每分 ${avgPM.toFixed(1)}）`
+      : `📋 來源：歷史紀錄（${matched[0].date}，${pikmin} 隻）`;
+  } else {
+    params = state.flowerParams[state.currentAccount] || {};
+    srcLabel = `📋 來源：當前儲存參數`;
+  }
+  if (!params.perFlower || !params.perMinute) {
+    alert(`找不到皮克敏數 ${pikmin} 的參數紀錄，請先在 Step 1 登錄相同皮克敏數的資料。`); return;
+  }
+  const perFlower = params.perFlower, perMinute = params.perMinute;
+  const miniNeeded    = Math.max(0, target - miniNow);
+  const flowersNeeded = perFlower > 0 ? Math.ceil(miniNeeded / perFlower) : 0;
+  const minsNeeded    = perMinute > 0 ? Math.ceil(miniNeeded / perMinute) : 0;
+  const h = Math.floor(minsNeeded/60), m = minsNeeded%60;
+  const timeStr = minsNeeded===0 ? '已達標 🎉' : h>0 ? `${h} 小時 ${m} 分鐘` : `${m} 分鐘`;
+  const stat = (label, val, color) =>
+    `<div style="background:var(--surface2);border-radius:8px;padding:12px 14px;text-align:center;min-width:140px">
+      <div style="font-size:0.72rem;color:var(--text2);margin-bottom:4px">${label}</div>
+      <div style="font-size:1.3rem;font-weight:900;color:${color}">${val}</div>
+    </div>`;
+  document.getElementById('flowerPredictSummary').innerHTML = `
+    <div class="card-title"><span class="icon">📊</span>預測結果</div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:4px">
+      ${stat('目前小花數', miniNow.toLocaleString(), 'var(--text)')}
+      ${stat('目標小花數', target.toLocaleString(), 'var(--accent)')}
+      ${stat('還需種幾朵', miniNeeded.toLocaleString(), miniNeeded===0?'var(--accent)':'var(--accent3)')}
+      ${stat('需消耗大花數', flowersNeeded.toLocaleString()+' 朵', 'var(--accent2)')}
+      ${stat('所需時間', timeStr, 'var(--accent4)')}
+      ${startTime&&minsNeeded>0 ? stat('預計完成時間', calcEndTime(startTime,minsNeeded), 'var(--yellow)') : ''}
+    </div>
+    <div style="margin-top:14px;padding:10px 14px;background:var(--surface3);border-radius:8px;font-size:0.82rem;color:var(--text2)">
+      ${srcLabel}　｜　每朵大花可種 <strong style="color:var(--accent2)">${perFlower.toFixed(1)}</strong> 朵小花 ／ 每分鐘種 <strong style="color:var(--accent4)">${perMinute.toFixed(1)}</strong> 朵小花
+    </div>`;
+  document.getElementById('flowerPredictResult').style.display = 'block';
+}
+
+function calcEndTime(startTime, addMins) {
+  const [h, m] = startTime.split(':').map(Number);
+  const total = h*60+m+addMins;
+  return `${String(Math.floor(total/60)%24).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
+}
+
+// ─── Init ─────────────────────────────────────────────────
+renderAccounts();
+renderEssence();
+checkDefaultBtn();
+
+// Date display
+document.getElementById('todayDate') && (document.getElementById('todayDate').textContent = getTodayKey());
+</script>
+</body>
+</html>
