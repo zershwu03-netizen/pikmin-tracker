@@ -344,19 +344,50 @@
   const db  = getFirestore(app);
   const DOC_REF = doc(db, 'tracker', 'shared');
 
-  // 讓主腳本可以呼叫儲存
+  // 防抖：自己剛 save 的那次 onSnapshot 不要重新 render（避免打字中被覆蓋）
+  let _suppressSnapshot = false;
+
   window._fbSave = async function(stateObj) {
     try {
+      _suppressSnapshot = true;
       await setDoc(DOC_REF, { data: JSON.stringify(stateObj) });
-    } catch(e) { console.error('Firebase save error', e); }
+      // 1.5 秒後解除抑制，確保之後別人的更新能正常收到
+      setTimeout(function() { _suppressSnapshot = false; }, 1500);
+      // 顯示已儲存
+      ['syncDot','syncDot2'].forEach(function(id){
+        const d=document.getElementById(id);
+        if(d){d.style.background='#3fb950';d.style.boxShadow='0 0 6px #3fb950';}
+      });
+      ['syncText','syncText2'].forEach(function(id){
+        const t=document.getElementById(id); if(t) t.textContent='已儲存';
+      });
+      setTimeout(function(){
+        ['syncDot','syncDot2'].forEach(function(id){
+          const d=document.getElementById(id);
+          if(d){d.style.background='#58a6ff';d.style.boxShadow='none';}
+        });
+        ['syncText','syncText2'].forEach(function(id){
+          const t=document.getElementById(id); if(t) t.textContent='線上';
+        });
+      }, 1200);
+    } catch(e) {
+      console.error('Firebase save error', e);
+      ['syncText','syncText2'].forEach(function(id){
+        const t=document.getElementById(id); if(t) t.textContent='⚠️ 儲存失敗';
+      });
+      ['syncDot','syncDot2'].forEach(function(id){
+        const d=document.getElementById(id);
+        if(d){d.style.background='#ff7b72';d.style.boxShadow='none';}
+      });
+    }
   };
 
-  // 即時監聽：雲端有變動就更新畫面
+  // 即時監聽：別人有更新時重新 render
   onSnapshot(DOC_REF, (snap) => {
     if (!snap.exists()) return;
+    if (_suppressSnapshot) return; // 自己剛存的，跳過
     try {
       const remote = JSON.parse(snap.data().data);
-      // 把 remote 合併進 window.state（保留 currentAccount 是本地個人設定）
       const cur = window.state ? window.state.currentAccount : null;
       window.state = ensureStateFields(remote);
       if (cur && window.state.accounts.includes(cur)) {
