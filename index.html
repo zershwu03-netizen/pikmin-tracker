@@ -477,6 +477,8 @@
     renderCategoryDatalist();
     const td = document.getElementById('todayDate');
     if (td) td.textContent = getTodayKey();
+    // 啟動時主動為所有帳號建立今天的紀錄（若還沒有）
+    autoResetDailyFields(getTodayKey());
     // 初始化儲存按鈕狀態
     if (typeof markGlobalDirty === 'function') markGlobalDirty(false);
     // 動態修正 sticky top 值
@@ -1604,7 +1606,7 @@ function getDailyRecord() {
       raidCount:  lim.raidCount  !== undefined ? lim.raidCount  : 1,
       sensorCount:lim.sensorCount!== undefined ? lim.sensorCount: 1,
       flowerCoins: 0,
-      flowerDone: null,
+      flowerDone: false,
       // 保留不重置（從前一天繼承）
       essenceWhite:  prev.essenceWhite  || 0,
       essenceYellow: prev.essenceYellow || 0,
