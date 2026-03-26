@@ -1103,11 +1103,59 @@ function dailySaveToCloud() { globalSaveToCloud(); }
 window.ensureStateFields = ensureStateFields;
 
 // ─── Clock ────────────────────────────────────────────────
+let _lastCheckedDate = new Date().toISOString().slice(0, 10);
+
 function updateClock() {
   const now = new Date();
   document.getElementById('clock').textContent = now.toLocaleString('zh-TW');
   updateMushroomTimers();
+
+  // 偵測跨日：凌晨 00:00 自動重置每日欄位
+  const today = now.toISOString().slice(0, 10);
+  if (today !== _lastCheckedDate) {
+    _lastCheckedDate = today;
+    autoResetDailyFields(today);
+  }
 }
+
+function autoResetDailyFields(today) {
+  const lim = window.state.dailyLimits || { mushCount: 3, raidCount: 1, sensorCount: 1 };
+  window.state.accounts.forEach(function(acct) {
+    if (!window.state.dailyRecords[acct]) window.state.dailyRecords[acct] = {};
+    // 取前一天最後一筆紀錄（繼承精華/花朵/任務）
+    const allDates = Object.keys(window.state.dailyRecords[acct]).sort();
+    const lastDate = allDates.length > 0 ? allDates[allDates.length - 1] : null;
+    const prev = (lastDate && lastDate !== today) ? window.state.dailyRecords[acct][lastDate] : {};
+    // 建立今日紀錄（重置每日欄位，繼承其他欄位）
+    window.state.dailyRecords[acct][today] = {
+      mushCount:    lim.mushCount   !== undefined ? lim.mushCount   : 3,
+      raidCount:    lim.raidCount   !== undefined ? lim.raidCount   : 1,
+      sensorCount:  lim.sensorCount !== undefined ? lim.sensorCount : 1,
+      flowerCoins:  0,
+      flowerDone:   null,
+      essenceWhite:  prev.essenceWhite  || 0,
+      essenceYellow: prev.essenceYellow || 0,
+      essenceRed:    prev.essenceRed    || 0,
+      essenceBlue:   prev.essenceBlue   || 0,
+      flowerWhite:   prev.flowerWhite   || 0,
+      flowerYellow:  prev.flowerYellow  || 0,
+      flowerRed:     prev.flowerRed     || 0,
+      flowerBlue:    prev.flowerBlue    || 0,
+      levelStage1:   prev.levelStage1   || '',
+      monthlyStage1: prev.monthlyStage1 || '',
+    };
+  });
+  // 存到雲端
+  if (window._fbSave) window._fbSave(window.state);
+  // 更新日期顯示與畫面
+  const td = document.getElementById('todayDate');
+  if (td) td.textContent = today;
+  if (window._appReady) {
+    if (typeof renderDaily === 'function') renderDaily();
+    if (typeof renderDailyOverview === 'function') renderDailyOverview();
+  }
+}
+
 setInterval(updateClock, 1000);
 updateClock();
 
