@@ -1103,7 +1103,10 @@ function dailySaveToCloud() { globalSaveToCloud(); }
 window.ensureStateFields = ensureStateFields;
 
 // ─── Clock ────────────────────────────────────────────────
-let _lastCheckedDate = new Date().toISOString().slice(0, 10);
+let _lastCheckedDate = (function() {
+  const now = new Date();
+  return new Date(now.getTime() + 8 * 3600000).toISOString().slice(0, 10);
+})();
 
 function updateClock() {
   const now = new Date();
@@ -1111,7 +1114,7 @@ function updateClock() {
   updateMushroomTimers();
 
   // 偵測跨日：凌晨 00:00 自動重置每日欄位
-  const today = now.toISOString().slice(0, 10);
+  const today = getTodayKey();
   if (today !== _lastCheckedDate) {
     _lastCheckedDate = today;
     autoResetDailyFields(today);
@@ -1578,7 +1581,12 @@ function checkDefaultBtn() {
 }
 
 // ─── 2. Daily Records ─────────────────────────────────────
-function getTodayKey() { return new Date().toISOString().slice(0,10); }
+function getTodayKey() {
+  // 使用台灣時間（UTC+8）而非 UTC
+  const now = new Date();
+  const twTime = new Date(now.getTime() + 8 * 3600000);
+  return twTime.toISOString().slice(0, 10);
+}
 
 function getDailyRecord() {
   const acct = state.currentAccount;
