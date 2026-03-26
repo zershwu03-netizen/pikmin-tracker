@@ -1342,7 +1342,7 @@ function renderDaily() {
       <!-- 精華剩餘 -->
       <div class="daily-item" style="grid-column: 1 / -1">
         <label>✨ 精華剩餘數量</label>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <div id="daily-ess-row" style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
           <span style="font-size:0.8rem;font-weight:700;color:var(--text2)">✨精華</span>
           ${[
             {key:'essenceWhite', label:'白', color:'#e6edf3'},
@@ -1353,10 +1353,9 @@ function renderDaily() {
             <div style="display:flex;align-items:center;gap:4px">
               <span style="font-size:0.8rem;font-weight:700;color:${f.color}">${f.label}</span>
               <button class="btn-counter" onclick="adjustDaily('${f.key}',-1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">−</button>
-              <input type="number" class="cell-input" id="daily-ess-${fi}"
+              <input type="text" inputmode="numeric" pattern="[0-9]*" class="cell-input daily-numpad" data-key="${f.key}" data-idx="${fi}"
                 style="width:60px;text-align:center;font-size:1rem;font-weight:800;color:${f.color};background:transparent;border-color:${f.color}55;padding:4px 6px"
-                value="${rec[f.key]||0}" onchange="setDaily('${f.key}',+this.value)"
-                onkeydown="dailyFieldTab(event,${fi})">
+                value="${rec[f.key]||0}">
               <button class="btn-counter" onclick="adjustDaily('${f.key}',1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">＋</button>
             </div>
           `).join('')}
@@ -1366,7 +1365,7 @@ function renderDaily() {
       <!-- 花朵剩餘 -->
       <div class="daily-item" style="grid-column: 1 / -1">
         <label>🌸 花朵剩餘數量</label>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <div id="daily-fl-row" style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
           <span style="font-size:0.8rem;font-weight:700;color:var(--text2)">🌸花朵</span>
           ${[
             {key:'flowerWhite', label:'白', color:'#e6edf3'},
@@ -1377,10 +1376,9 @@ function renderDaily() {
             <div style="display:flex;align-items:center;gap:4px">
               <span style="font-size:0.8rem;font-weight:700;color:${f.color}">${f.label}</span>
               <button class="btn-counter" onclick="adjustDaily('${f.key}',-1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">−</button>
-              <input type="number" class="cell-input" id="daily-fl-${fi}"
+              <input type="text" inputmode="numeric" pattern="[0-9]*" class="cell-input daily-numpad" data-key="${f.key}" data-idx="${fi + 4}"
                 style="width:60px;text-align:center;font-size:1rem;font-weight:800;color:${f.color};background:transparent;border-color:${f.color}55;padding:4px 6px"
-                value="${rec[f.key]||0}" onchange="setDaily('${f.key}',+this.value)"
-                onkeydown="dailyFieldTab(event,${fi + 4})">
+                value="${rec[f.key]||0}">
               <button class="btn-counter" onclick="adjustDaily('${f.key}',1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">＋</button>
             </div>
           `).join('')}
@@ -1407,20 +1405,38 @@ function renderDaily() {
   `;
 }
 
-// Tab through all 8 daily fields in order:
-// 0-3: 精華白黃紅藍 → 4-7: 花朵白黃紅藍
-const DAILY_FIELD_IDS = [
-  'daily-ess-0','daily-ess-1','daily-ess-2','daily-ess-3',
-  'daily-fl-0', 'daily-fl-1', 'daily-fl-2', 'daily-fl-3',
-];
-function dailyFieldTab(event, idx) {
-  if (event.key === 'Enter' || event.key === 'Tab') {
-    event.preventDefault();
-    const nextIdx = (idx + 1) % DAILY_FIELD_IDS.length;
-    const el = document.getElementById(DAILY_FIELD_IDS[nextIdx]);
-    if (el) { el.focus(); el.select(); }
-  }
+// ── 精華/花朵跳格：事件委派，掛在 document ──
+// 順序：精華白→黃→紅→藍→花朵白→黃→紅→藍→回精華白
+// 跳格時只靜默存值，不呼叫 renderDaily，避免 DOM 重繪使焦點消失
+function saveDailyNumpadSilent(el) {
+  const key = el.dataset.key;
+  const val = parseInt(el.value, 10);
+  if (!key || isNaN(val)) return;
+  const rec = getDailyRecord();
+  rec[key] = val;
+  save();
 }
+
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter' && e.key !== 'Tab') return;
+  const el = e.target;
+  if (!el.classList.contains('daily-numpad')) return;
+  e.preventDefault();
+  e.stopPropagation();
+  saveDailyNumpadSilent(el);
+  const all = Array.from(document.querySelectorAll('.daily-numpad'));
+  const idx = all.indexOf(el);
+  if (idx === -1) return;
+  const next = all[(idx + 1) % all.length];
+  next.focus();
+  next.select();
+}, true);
+
+document.addEventListener('blur', function(e) {
+  const el = e.target;
+  if (!el.classList.contains('daily-numpad')) return;
+  saveDailyNumpadSilent(el);
+}, true);
 
 function updateDailyLimit(key, val) {
   if (!state.dailyLimits) state.dailyLimits = { mushCount: 3, raidCount: 1, sensorCount: 1 };
