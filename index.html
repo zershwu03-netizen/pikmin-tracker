@@ -42,7 +42,6 @@
     overflow-x: hidden;
   }
 
-  /* ─── Header ─── */
   header {
     background: linear-gradient(135deg, #0d2a1a 0%, #0d1a2a 50%, #1a0d2a 100%);
     border-bottom: 1px solid var(--border);
@@ -56,7 +55,6 @@
   .logo { font-size: 1.5rem; font-weight: 900; display: flex; align-items: center; gap: 10px; }
   .logo span { background: linear-gradient(135deg, #3fb950, #58a6ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-  /* ─── Account Selector ─── */
   .account-bar {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
@@ -67,10 +65,14 @@
   .account-tab {
     padding: 6px 16px; border-radius: 20px; border: 1px solid var(--border);
     background: var(--surface2); cursor: pointer; font-size: 0.85rem; font-weight: 700;
-    transition: all 0.2s; color: var(--text2);
+    transition: all 0.2s; color: var(--text2); display: flex; align-items: center; gap: 6px;
   }
   .account-tab.active { background: var(--accent); color: #000; border-color: var(--accent); }
   .account-tab:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+  .account-tab.dragging { opacity: 0.4; }
+  .account-tab.drag-over { border-color: var(--accent2); box-shadow: 0 0 0 2px var(--accent2)44; }
+  .drag-handle { cursor: grab; opacity: 0.5; font-size: 0.8rem; }
+  .drag-handle:active { cursor: grabbing; }
   .btn-add-acct {
     padding: 6px 14px; border-radius: 20px; border: 1px dashed var(--border);
     background: transparent; cursor: pointer; font-size: 0.85rem; color: var(--text3);
@@ -78,7 +80,6 @@
   }
   .btn-add-acct:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ─── Nav Tabs ─── */
   .nav-tabs {
     display: flex; border-bottom: 1px solid var(--border);
     background: var(--surface); padding: 0 24px; gap: 0; overflow-x: auto;
@@ -91,12 +92,10 @@
   .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
   .nav-tab:hover:not(.active) { color: var(--text); }
 
-  /* ─── Main Content ─── */
   main { padding: 24px; max-width: 1200px; margin: 0 auto; }
   .section { display: none; }
   .section.active { display: block; }
 
-  /* ─── Cards & Tables ─── */
   .card {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius); padding: 20px; margin-bottom: 20px;
@@ -117,7 +116,6 @@
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: var(--surface2); }
 
-  /* Color coding */
   .cell-white input, .cell-white { background: var(--white-bg); }
   .cell-green { background: var(--green-bg); color: var(--green-text); font-weight: 700; }
   .cell-yellow { background: var(--yellow-bg); color: var(--yellow-text); font-weight: 700; }
@@ -129,12 +127,10 @@
   .cell-input:focus { outline: none; border-color: var(--accent2); }
   .flower-name { font-weight: 800; }
 
-  /* ─── Legend ─── */
   .legend { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
   .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text2); }
   .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
 
-  /* ─── Account Daily Record ─── */
   .daily-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;
   }
@@ -163,18 +159,41 @@
   .toggle-btn.no { background: #2a1a1a; color: var(--accent5); border-color: var(--accent5); }
   select.cell-input { cursor: pointer; }
 
-  /* ─── Mushroom Points ─── */
+  /* ─── Mushroom ─── */
   .mushroom-list { display: flex; flex-direction: column; gap: 10px; }
   .mushroom-item {
     background: var(--surface2); border: 1px solid var(--border);
     border-radius: 10px; padding: 14px 16px;
     display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: center;
   }
-  .mushroom-coord { font-family: monospace; font-size: 0.85rem; color: var(--accent2); font-weight: 700; }
+  .mushroom-coord {
+    font-family: monospace; font-size: 0.85rem; color: var(--accent2); font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+  }
+  .mushroom-coord:hover .copy-hint { opacity: 1; }
+  .copy-hint { opacity: 0; font-size: 0.7rem; background: var(--surface3); padding: 2px 6px; border-radius: 4px; color: var(--text3); transition: opacity 0.2s; }
   .mushroom-timer { font-weight: 800; color: var(--accent3); font-size: 1.05rem; }
   .mushroom-timer.expired { color: var(--accent5); animation: pulse 1s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
   .mushroom-acct { font-size: 0.8rem; color: var(--text2); }
+
+  /* 菇菇類別 badge */
+  .mush-category-badge {
+    display: inline-block; padding: 1px 7px; border-radius: 10px;
+    font-size: 0.7rem; font-weight: 800; margin-top: 3px;
+    background: var(--surface3); color: var(--text2); border: 1px solid var(--border);
+  }
+
+  /* 活躍菇點 highlight */
+  .mushroom-item.is-active-spot {
+    border-color: var(--accent3);
+    box-shadow: 0 0 0 1px var(--accent3)44;
+  }
+  .active-spot-badge {
+    font-size: 0.7rem; font-weight: 900; color: var(--accent3);
+    background: #2d1f0a; padding: 1px 7px; border-radius: 10px; border: 1px solid var(--accent3)66;
+  }
+
   .btn-del {
     background: transparent; border: 1px solid var(--border); color: var(--text3);
     width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;
@@ -182,7 +201,6 @@
   }
   .btn-del:hover { background: #2a1a1a; color: var(--accent5); border-color: var(--accent5); }
 
-  /* ─── Form Row ─── */
   .form-row {
     display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;
     background: var(--surface2); border: 1px solid var(--border);
@@ -203,7 +221,6 @@
   }
   .btn-primary:hover { background: #4ac760; transform: translateY(-1px); }
 
-  /* ─── Flower planting ─── */
   .flower-result {
     background: var(--surface2); border: 1px solid var(--border);
     border-radius: 10px; padding: 16px; margin-top: 16px;
@@ -214,7 +231,6 @@
   .result-label { color: var(--text2); }
   .result-val { font-weight: 800; color: var(--accent); font-size: 1.05rem; }
 
-  /* ─── Utility ─── */
   .badge {
     display: inline-block; padding: 2px 8px; border-radius: 12px;
     font-size: 0.72rem; font-weight: 800;
@@ -231,12 +247,10 @@
 
   .empty-state { text-align: center; padding: 40px; color: var(--text3); font-size: 0.9rem; }
 
-  /* ─── Scrollbar ─── */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-  /* Modal */
   .modal-overlay {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
     z-index: 200; align-items: center; justify-content: center;
@@ -245,6 +259,7 @@
   .modal {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius); padding: 24px; min-width: 320px; max-width: 90vw;
+    max-height: 90vh; overflow-y: auto;
   }
   .modal h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 16px; }
   .modal input {
@@ -277,7 +292,6 @@
     .daily-grid { grid-template-columns: 1fr 1fr; }
   }
 
-  /* ─── Context Menu ─── */
   .ctx-menu {
     position: fixed; z-index: 500;
     background: var(--surface2); border: 1px solid var(--border);
@@ -296,24 +310,34 @@
   .ctx-item.danger { color: var(--accent5); }
   .ctx-item.danger:hover { background: #2a1a1a; }
   .ctx-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* copy toast */
+  .copy-toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px);
+    background: var(--surface2); border: 1px solid var(--accent); color: var(--accent);
+    padding: 8px 20px; border-radius: 20px; font-weight: 800; font-size: 0.85rem;
+    transition: transform 0.25s; z-index: 999; pointer-events: none;
+  }
+  .copy-toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* category datalist combo */
+  .category-combo-wrap { position: relative; display: flex; gap: 4px; align-items: center; }
+  .category-combo-wrap input { min-width: 130px; }
 </style>
 </head>
 <body>
 
-<!-- Header -->
 <header>
   <div class="logo">🌿 <span>皮克敏追蹤器</span></div>
   <div style="font-size:0.8rem;color:var(--text3)" id="clock"></div>
 </header>
 
-<!-- Account Bar -->
 <div class="account-bar">
   <div style="font-size:0.8rem;color:var(--text2);font-weight:700">帳號：</div>
   <div class="account-tabs" id="accountTabs"></div>
   <button class="btn-add-acct" onclick="openAddAccount()">＋ 新增帳號</button>
 </div>
 
-<!-- Nav Tabs -->
 <div class="nav-tabs">
   <div class="nav-tab active" data-tab="essence" onclick="switchTab('essence')">✨ 精華計算</div>
   <div class="nav-tab" data-tab="daily" onclick="switchTab('daily')">📅 帳號紀錄</div>
@@ -321,7 +345,6 @@
   <div class="nav-tab" data-tab="flower" onclick="switchTab('flower')">🌸 種花紀錄</div>
 </div>
 
-<!-- Main -->
 <main>
 
 <!-- ══════ 1. 精華計算 ══════ -->
@@ -337,6 +360,25 @@
       <button class="btn-primary" onclick="addEssenceRow()">＋ 新增花種</button>
     </div>
   </div>
+
+  <!-- 全域上限參數 -->
+  <div class="card" style="margin-bottom:16px;background:var(--surface2)">
+    <div class="card-title" style="margin-bottom:10px"><span class="icon">⚙️</span>全域上限參數（新增花種預設值）</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+      <div class="form-group">
+        <label>精華上限預設</label>
+        <input type="number" id="globalEssenceLimit" value="250" style="width:100px" onchange="saveGlobalLimits()">
+      </div>
+      <div class="form-group">
+        <label>花上限預設</label>
+        <input type="number" id="globalFlowerLimit" value="400" style="width:100px" onchange="saveGlobalLimits()">
+      </div>
+      <div style="font-size:0.78rem;color:var(--text3);align-self:flex-end;padding-bottom:6px">
+        💡 修改後，點「新增花種」將以此為預設值（不影響已有花種）
+      </div>
+    </div>
+  </div>
+
   <div class="legend">
     <div class="legend-item"><div class="legend-dot" style="background:#1c2333;border:1px solid #30363d"></div>手動輸入</div>
     <div class="legend-item"><div class="legend-dot" style="background:#1a3a1a"></div>參數（可修改）</div>
@@ -371,7 +413,6 @@
     <div class="section-title">📅 帳號紀錄</div>
     <div style="font-size:0.8rem;color:var(--text3)" id="todayDate"></div>
   </div>
-  <!-- 內部分頁 -->
   <div class="tabs-inner" style="margin-bottom:16px">
     <div class="tab-inner active" id="dailyTabSingle" onclick="switchDailyTab('single')">👤 個別帳號</div>
     <div class="tab-inner" id="dailyTabOverview" onclick="switchDailyTab('overview')">📊 總覽</div>
@@ -386,15 +427,16 @@
     <div class="section-title">🍄 菇點紀錄</div>
   </div>
 
-  <!-- 新增菇點表單 -->
-  <div class="form-row" style="flex-direction:column;gap:14px">
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <span style="font-size:0.82rem;color:var(--text2);font-weight:700">登錄模式：</span>
-      <button class="toggle-btn yes" id="modeAccountBtn" onclick="setMushMode('account')">👤 帳號卡菇</button>
-      <button class="toggle-btn" id="modeResetBtn" onclick="setMushMode('reset')">🕓 無人卡（重置計算）</button>
-    </div>
+  <!-- 登錄模式 tabs -->
+  <div class="tabs-inner" id="mushModeTabs">
+    <div class="tab-inner active" id="mushModeAccountTab" onclick="setMushMode('account')">👤 帳號卡菇</div>
+    <div class="tab-inner" id="mushModeResetTab" onclick="setMushMode('reset')">🕓 無人卡</div>
+    <div class="tab-inner" id="mushModeHistoryTab" onclick="setMushMode('history')">📦 歷史重置菇點</div>
+  </div>
 
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+  <!-- 帳號卡菇模式 -->
+  <div id="mushPanelAccount">
+    <div class="form-row" style="flex-wrap:wrap;gap:10px;align-items:flex-end">
       <div class="form-group">
         <label>座標</label>
         <input id="mush-coord" placeholder="例：35.12, 139.45" style="width:160px">
@@ -403,54 +445,89 @@
         <label>地點名稱</label>
         <input id="mush-name" placeholder="例：台北火車站">
       </div>
+      <div class="form-group">
+        <label>菇菇類別</label>
+        <div class="category-combo-wrap">
+          <input id="mush-category" list="categoryList" placeholder="選擇或輸入" style="min-width:130px">
+          <button class="btn-secondary" onclick="openCategoryManager()" style="padding:6px 10px;font-size:0.78rem;white-space:nowrap" title="管理類別">⚙️</button>
+        </div>
+        <datalist id="categoryList"></datalist>
+      </div>
+      <div class="form-group">
+        <label>卡菇帳號</label>
+        <select id="mush-acct"></select>
+      </div>
+      <div class="form-group">
+        <label>剩餘天數</label>
+        <input id="mush-days" type="number" min="0" value="0" style="width:72px">
+      </div>
+      <div class="form-group">
+        <label>剩餘小時</label>
+        <input id="mush-hours" type="number" min="0" max="23" value="0" style="width:72px">
+      </div>
+      <div class="form-group">
+        <label>剩餘分鐘</label>
+        <input id="mush-mins" type="number" min="0" max="59" value="0" style="width:72px">
+      </div>
+      <button class="btn-primary" onclick="addMushroom('account')">登錄菇點</button>
+    </div>
+  </div>
 
-      <!-- 帳號卡菇模式 -->
-      <div id="modeAccountFields" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-        <div class="form-group">
-          <label>卡菇帳號</label>
-          <select id="mush-acct"></select>
-        </div>
-        <div class="form-group">
-          <label>剩餘天數</label>
-          <input id="mush-days" type="number" min="0" value="0" style="width:72px">
-        </div>
-        <div class="form-group">
-          <label>剩餘小時</label>
-          <input id="mush-hours" type="number" min="0" max="23" value="0" style="width:72px">
-        </div>
-        <div class="form-group">
-          <label>剩餘分鐘</label>
-          <input id="mush-mins" type="number" min="0" max="59" value="0" style="width:72px">
+  <!-- 無人卡模式 -->
+  <div id="mushPanelReset" style="display:none">
+    <div class="form-row" style="flex-wrap:wrap;gap:10px;align-items:flex-end">
+      <div class="form-group">
+        <label>座標</label>
+        <input id="mush-coord-r" placeholder="例：35.12, 139.45" style="width:160px">
+      </div>
+      <div class="form-group">
+        <label>地點名稱</label>
+        <input id="mush-name-r" placeholder="例：大阪城公園">
+      </div>
+      <div class="form-group">
+        <label>菇菇類別</label>
+        <div class="category-combo-wrap">
+          <input id="mush-category-r" list="categoryList" placeholder="選擇或輸入" style="min-width:130px">
+          <button class="btn-secondary" onclick="openCategoryManager()" style="padding:6px 10px;font-size:0.78rem;white-space:nowrap" title="管理類別">⚙️</button>
         </div>
       </div>
-
-      <!-- 重置計算模式 -->
-      <div id="modeResetFields" style="display:none;gap:10px;flex-wrap:wrap;align-items:flex-end">
-        <div class="form-group">
-          <div style="font-size:0.82rem;font-weight:700;color:var(--accent2)">🕐 按下「登錄菇點」時自動記錄當下台灣時間</div>
-          <div class="info-tip">系統自動計算到下一個台灣時間 04:00 的倒數</div>
+      <div class="form-group">
+        <label>當地時間 <span class="badge badge-blue">HH:MM</span></label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input id="mush-local-time" type="time" style="width:110px" oninput="previewResetTime()">
+          <button class="btn-secondary" onclick="fillLocalTimeNow()" style="padding:6px 10px;font-size:0.78rem">🕐 現在</button>
         </div>
+        <div class="info-tip" id="tz-preview" style="color:var(--accent2);margin-top:4px"></div>
       </div>
+      <button class="btn-primary" onclick="addMushroom('reset')">登錄菇點</button>
+    </div>
+    <div id="tz-info-bar" style="background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.8rem;color:var(--text2)">
+      🌐 <span id="tz-auto-label">偵測時區中...</span><br>
+      <span style="color:var(--text3)">到期時間以當地 04:00 計算，自動換算成台灣到期時間顯示。</span>
+    </div>
+  </div>
 
-      <button class="btn-primary" onclick="addMushroom()">登錄菇點</button>
+  <!-- 歷史重置菇點模式（只顯示列表） -->
+  <div id="mushPanelHistory" style="display:none">
+    <div style="font-size:0.85rem;color:var(--text2);margin-bottom:12px;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+      📦 顯示所有已重置菇點。若同一座標被登錄 2 次以上，自動標記為「活躍菇點」。
     </div>
   </div>
 
   <!-- 活躍菇點 -->
-  <div style="font-size:0.85rem;font-weight:800;color:var(--text2);margin-bottom:10px">🍄 活躍菇點</div>
-  <div class="mushroom-list" id="mushroomList">
-    <div class="empty-state">尚無活躍菇點 🍄</div>
+  <div id="mushSectionActive" style="margin-bottom:20px">
+    <div style="font-size:0.85rem;font-weight:800;color:var(--text2);margin-bottom:10px">🍄 活躍菇點</div>
+    <div class="mushroom-list" id="mushroomList">
+      <div class="empty-state">尚無活躍菇點 🍄</div>
+    </div>
   </div>
 
-  <!-- 封存菇點 -->
-  <div style="margin-top:24px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;cursor:pointer" onclick="toggleArchive()">
+  <!-- 已重置菇點（在歷史頁籤才顯示） -->
+  <div id="mushSectionArchive" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div style="font-size:0.85rem;font-weight:800;color:var(--text3)">📦 已重置菇點 <span id="archiveCount"></span></div>
-      <span id="archiveArrow" style="color:var(--text3);font-size:0.8rem">▶ 展開</span>
     </div>
-    <div id="mushroomArchive" style="display:none">
-      <div class="mushroom-list" id="mushroomArchiveList"></div>
-    </div>
+    <div class="mushroom-list" id="mushroomArchiveList"></div>
   </div>
 </div>
 
@@ -466,6 +543,10 @@
     <div class="form-group" style="margin-bottom:12px">
       <label style="font-size:0.8rem;font-weight:700;margin-bottom:6px;display:block">地點名稱</label>
       <input id="edit-mush-name" class="cell-input" placeholder="例：台北火車站" style="width:100%">
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label style="font-size:0.8rem;font-weight:700;margin-bottom:6px;display:block">菇菇類別</label>
+      <input id="edit-mush-category" class="cell-input" list="categoryList" placeholder="選擇或輸入" style="width:100%">
     </div>
     <div class="form-group" style="margin-bottom:12px">
       <label style="font-size:0.8rem;font-weight:700;margin-bottom:6px;display:block">卡菇帳號</label>
@@ -499,13 +580,28 @@
   </div>
 </div>
 
+<!-- 類別管理 Modal -->
+<div class="modal-overlay" id="categoryModal">
+  <div class="modal" style="min-width:360px">
+    <h3>⚙️ 管理菇菇類別</h3>
+    <p style="font-size:0.82rem;color:var(--text2);margin-bottom:14px">可新增、刪除或修改類別名稱。</p>
+    <div id="categoryListEdit" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;margin-bottom:14px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <input id="newCategoryInput" class="cell-input" placeholder="輸入新類別名稱" style="flex:1" onkeydown="if(event.key==='Enter')addCategory()">
+      <button class="btn-primary" onclick="addCategory()" style="align-self:auto">新增</button>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-primary" onclick="closeCategoryManager()">完成</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══════ 4. 種花紀錄 ══════ -->
 <div class="section" id="tab-flower">
   <div class="section-header">
     <div class="section-title">🌸 種花計算器</div>
   </div>
 
-  <!-- Step 1: 打點紀錄 -->
   <div class="card">
     <div class="card-title"><span class="icon">📝</span>Step 1 — 逐點登錄</div>
     <p style="font-size:0.82rem;color:var(--text2);margin-bottom:14px">
@@ -529,11 +625,13 @@
       </div>
       <div class="form-group">
         <label>當下花朵數</label>
-        <input id="fl-pt-flowers" type="number" min="0" placeholder="例：208" style="width:100px">
+        <input id="fl-pt-flowers" type="number" min="0" placeholder="例：208" style="width:100px"
+          onkeydown="flowerInputKeydown(event,'fl-pt-flowers','fl-pt-mini')">
       </div>
       <div class="form-group">
         <label>累積小花數</label>
-        <input id="fl-pt-mini" type="number" min="0" placeholder="例：0" style="width:110px">
+        <input id="fl-pt-mini" type="number" min="0" placeholder="例：0" style="width:110px"
+          onkeydown="flowerInputKeydown(event,'fl-pt-mini',null)">
       </div>
       <div class="form-group" style="justify-content:flex-end">
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-bottom:0">
@@ -569,7 +667,6 @@
     </div>
   </div>
 
-  <!-- Step 2: 預測 -->
   <div class="card">
     <div class="card-title"><span class="icon">🎯</span>Step 2 — 預測目標</div>
     <p style="font-size:0.82rem;color:var(--text2);margin-bottom:14px">根據歷史參數，輸入皮克敏數和目前小花數量，計算種到目標需要多少花、多少時間。</p>
@@ -595,12 +692,10 @@
     </div>
   </div>
 
-  <!-- 預測結果 -->
   <div id="flowerPredictResult" style="display:none">
     <div class="card" id="flowerPredictSummary"></div>
   </div>
 
-  <!-- 歷史紀錄 -->
   <div class="card" id="flowerHistoryCard" style="display:none">
     <div class="card-title"><span class="icon">📅</span>種花歷史紀錄</div>
     <div style="overflow-x:auto">
@@ -676,40 +771,69 @@
 <!-- Context Menu -->
 <div class="ctx-menu" id="ctxMenu">
   <div class="ctx-item" onclick="ctxRename()">✏️ 重新命名</div>
+  <div class="ctx-item" onclick="ctxMoveLeft()">⬅️ 向左移</div>
+  <div class="ctx-item" onclick="ctxMoveRight()">➡️ 向右移</div>
   <div class="ctx-divider"></div>
   <div class="ctx-item danger" onclick="ctxDelete()">🗑️ 刪除帳號</div>
 </div>
 
+<!-- Copy Toast -->
+<div class="copy-toast" id="copyToast">✅ 座標已複製</div>
+
 <script>
 // ─── State ───────────────────────────────────────────────
-const STATE_KEY = 'pikmin_tracker_v3';
+const STATE_KEY = 'pikmin_tracker_v4';
 let state = load();
 
 function load() {
   try {
     const s = localStorage.getItem(STATE_KEY);
-    if (s) return JSON.parse(s);
+    if (s) {
+      const parsed = JSON.parse(s);
+      // migrate from v3 key
+      return parsed;
+    }
+    // try migrate from v3
+    const old = localStorage.getItem('pikmin_tracker_v3');
+    if (old) {
+      const o = JSON.parse(old);
+      o.mushCategories = o.mushCategories || getDefaultCategories();
+      o.globalEssenceLimit = o.globalEssenceLimit || 250;
+      o.globalFlowerLimit = o.globalFlowerLimit || 400;
+      return o;
+    }
   } catch(e) {}
   return {
     accounts: ['帳號A', '帳號B'],
     currentAccount: '帳號A',
-    essenceRows: {}, // per-account
-    essenceParams: {}, // per-account: [{name, essenceLimit, flowerLimit}]
-    dailyRecords: {}, // per-account per-date
-    mushrooms: [], // global list
-    flowerRows: {}, // per-account
-    flowerParams: {}, // per-account pikminCount
-    flowerHistory: {}, // per-account array of batches
+    essenceRows: {},
+    essenceParams: {},
+    dailyRecords: {},
+    mushrooms: [],
+    flowerRows: {},
+    flowerParams: {},
+    flowerHistory: {},
+    mushCategories: getDefaultCategories(),
+    globalEssenceLimit: 250,
+    globalFlowerLimit: 400,
   };
 }
 
+function getDefaultCategories() {
+  return ['巨大活動','大水','大火','大電','大毒','一般水','一般火','一般電','一般毒','大紅','大藍','大白','大黃','大粉','大紫'];
+}
+
 function save() { try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e){} }
+
+// ensure new fields exist on loaded state
+if (!state.mushCategories) state.mushCategories = getDefaultCategories();
+if (!state.globalEssenceLimit) state.globalEssenceLimit = 250;
+if (!state.globalFlowerLimit) state.globalFlowerLimit = 400;
 
 // ─── Clock ────────────────────────────────────────────────
 function updateClock() {
   const now = new Date();
   document.getElementById('clock').textContent = now.toLocaleString('zh-TW');
-  // Update mushroom timers
   updateMushroomTimers();
 }
 setInterval(updateClock, 1000);
@@ -722,7 +846,7 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab).classList.add('active');
   document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
   if (tab === 'daily') { renderDaily(); if (dailyTab==='overview') renderDailyOverview(); }
-  if (tab === 'mushroom') renderMushrooms();
+  if (tab === 'mushroom') { renderMushrooms(); renderCategoryDatalist(); }
   if (tab === 'flower') renderFlower();
   if (tab === 'essence') renderEssence();
 }
@@ -731,17 +855,37 @@ function switchTab(tab) {
 function renderAccounts() {
   const tabs = document.getElementById('accountTabs');
   tabs.innerHTML = '';
-  state.accounts.forEach(a => {
+  state.accounts.forEach((a, idx) => {
     const btn = document.createElement('button');
     btn.className = 'account-tab' + (a === state.currentAccount ? ' active' : '');
-    btn.textContent = a;
-    btn.title = '右鍵或長按可編輯／刪除';
-    btn.onclick = () => { state.currentAccount = a; save(); renderAccounts(); switchTab(getCurrentTab()); };
-    // Right-click → context menu
-    btn.oncontextmenu = (e) => { e.preventDefault(); openCtxMenu(e, a); };
-    // Long-press for mobile
+    btn.dataset.account = a;
+    btn.dataset.idx = idx;
+    btn.draggable = true;
+    btn.innerHTML = `<span class="drag-handle" title="拖曳排序">⠿</span>${a}`;
+    btn.title = '右鍵或長按可編輯／刪除；拖曳可排序';
+    btn.addEventListener('click', (e) => {
+      if (e.target.classList.contains('drag-handle')) return;
+      state.currentAccount = a; save(); renderAccounts(); switchTab(getCurrentTab());
+    });
+    btn.oncontextmenu = (e) => { e.preventDefault(); openCtxMenu(e, a, idx); };
+    // drag-and-drop
+    btn.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', idx); btn.classList.add('dragging'); });
+    btn.addEventListener('dragend', () => btn.classList.remove('dragging'));
+    btn.addEventListener('dragover', e => { e.preventDefault(); btn.classList.add('drag-over'); });
+    btn.addEventListener('dragleave', () => btn.classList.remove('drag-over'));
+    btn.addEventListener('drop', e => {
+      e.preventDefault(); btn.classList.remove('drag-over');
+      const fromIdx = +e.dataTransfer.getData('text/plain');
+      const toIdx = idx;
+      if (fromIdx === toIdx) return;
+      const arr = [...state.accounts];
+      const [moved] = arr.splice(fromIdx, 1);
+      arr.splice(toIdx, 0, moved);
+      state.accounts = arr;
+      save(); renderAccounts();
+    });
     let pressTimer;
-    btn.addEventListener('touchstart', e => { pressTimer = setTimeout(() => { openCtxMenu(e.touches[0], a); }, 500); }, {passive:true});
+    btn.addEventListener('touchstart', e => { pressTimer = setTimeout(() => { openCtxMenu(e.touches[0], a, idx); }, 500); }, {passive:true});
     btn.addEventListener('touchend', () => clearTimeout(pressTimer));
     btn.addEventListener('touchmove', () => clearTimeout(pressTimer));
     tabs.appendChild(btn);
@@ -751,19 +895,25 @@ function renderAccounts() {
 
 // ─── Context Menu ─────────────────────────────────────────
 let ctxTarget = null;
+let ctxTargetIdx = -1;
 
-function openCtxMenu(e, accountName) {
+function openCtxMenu(e, accountName, idx) {
   ctxTarget = accountName;
+  ctxTargetIdx = idx;
   const menu = document.getElementById('ctxMenu');
   menu.classList.add('open');
-  // Disable delete if only 1 account
+  const isFirst = idx === 0;
+  const isLast = idx === state.accounts.length - 1;
+  menu.querySelectorAll('.ctx-item')[1].style.opacity = isFirst ? '0.3' : '1';
+  menu.querySelectorAll('.ctx-item')[1].style.pointerEvents = isFirst ? 'none' : 'auto';
+  menu.querySelectorAll('.ctx-item')[2].style.opacity = isLast ? '0.3' : '1';
+  menu.querySelectorAll('.ctx-item')[2].style.pointerEvents = isLast ? 'none' : 'auto';
   menu.querySelector('.danger').style.opacity = state.accounts.length <= 1 ? '0.3' : '1';
   menu.querySelector('.danger').style.pointerEvents = state.accounts.length <= 1 ? 'none' : 'auto';
-  // Position
   const x = e.clientX || e.pageX;
   const y = e.clientY || e.pageY;
-  menu.style.left = Math.min(x, window.innerWidth - 180) + 'px';
-  menu.style.top = Math.min(y, window.innerHeight - 100) + 'px';
+  menu.style.left = Math.min(x, window.innerWidth - 200) + 'px';
+  menu.style.top = Math.min(y, window.innerHeight - 140) + 'px';
 }
 
 document.addEventListener('click', e => {
@@ -778,17 +928,35 @@ function ctxRename() {
   setTimeout(() => { const inp = document.getElementById('renameAccountInput'); inp.focus(); inp.select(); }, 100);
 }
 
+function ctxMoveLeft() {
+  document.getElementById('ctxMenu').classList.remove('open');
+  if (ctxTargetIdx <= 0) return;
+  const arr = [...state.accounts];
+  [arr[ctxTargetIdx-1], arr[ctxTargetIdx]] = [arr[ctxTargetIdx], arr[ctxTargetIdx-1]];
+  state.accounts = arr;
+  save(); renderAccounts();
+}
+
+function ctxMoveRight() {
+  document.getElementById('ctxMenu').classList.remove('open');
+  if (ctxTargetIdx >= state.accounts.length - 1) return;
+  const arr = [...state.accounts];
+  [arr[ctxTargetIdx], arr[ctxTargetIdx+1]] = [arr[ctxTargetIdx+1], arr[ctxTargetIdx]];
+  state.accounts = arr;
+  save(); renderAccounts();
+}
+
 function ctxDelete() {
   document.getElementById('ctxMenu').classList.remove('open');
   if (state.accounts.length <= 1) return;
   if (!confirm(`確定要刪除帳號「${ctxTarget}」？\n此帳號的所有紀錄將一併刪除。`)) return;
-  // Remove all data for this account
   delete state.essenceRows[ctxTarget];
   delete state.dailyRecords[ctxTarget];
   delete state.flowerHistory[ctxTarget];
   delete state.flowerParams[ctxTarget];
-  state.mushrooms = state.mushrooms.filter(m => m.acct !== ctxTarget);
-  state.accounts = state.accounts.filter(x => x !== ctxTarget);
+  delete state.essenceParams[ctxTarget];
+  state.mushrooms.forEach(m => { if (m.acct === ctxTarget) m.acct = '（無人卡）'; });
+  state.accounts = state.accounts.filter(a => a !== ctxTarget);
   if (state.currentAccount === ctxTarget) state.currentAccount = state.accounts[0];
   save(); renderAccounts(); switchTab(getCurrentTab());
 }
@@ -797,19 +965,15 @@ function closeRenameModal() { document.getElementById('renameAccountModal').clas
 
 function confirmRename() {
   const newName = document.getElementById('renameAccountInput').value.trim();
-  if (!newName) return;
-  if (newName === ctxTarget) { closeRenameModal(); return; }
+  if (!newName || newName === ctxTarget) { closeRenameModal(); return; }
   if (state.accounts.includes(newName)) { alert('帳號名稱已存在'); return; }
-  // Rename all references
   const idx = state.accounts.indexOf(ctxTarget);
   state.accounts[idx] = newName;
   if (state.currentAccount === ctxTarget) state.currentAccount = newName;
-  // Migrate data keys
-  const migrate = (obj) => { if (obj[ctxTarget] !== undefined) { obj[newName] = obj[ctxTarget]; delete obj[ctxTarget]; } };
-  migrate(state.essenceRows);
-  migrate(state.dailyRecords);
-  migrate(state.flowerHistory);
-  migrate(state.flowerParams);
+  // migrate data keys
+  ['essenceRows','dailyRecords','flowerHistory','flowerParams','essenceParams'].forEach(k => {
+    if (state[k][ctxTarget] !== undefined) { state[k][newName] = state[k][ctxTarget]; delete state[k][ctxTarget]; }
+  });
   state.mushrooms.forEach(m => { if (m.acct === ctxTarget) m.acct = newName; });
   save(); closeRenameModal(); renderAccounts(); switchTab(getCurrentTab());
 }
@@ -830,6 +994,13 @@ function confirmAddAccount() {
   save(); closeModal(); renderAccounts(); switchTab(getCurrentTab());
 }
 
+// ─── Global Limits ────────────────────────────────────────
+function saveGlobalLimits() {
+  state.globalEssenceLimit = +document.getElementById('globalEssenceLimit').value || 250;
+  state.globalFlowerLimit = +document.getElementById('globalFlowerLimit').value || 400;
+  save();
+}
+
 // ─── 1. Essence Calculator ────────────────────────────────
 function getEssenceRows() {
   if (!state.essenceRows[state.currentAccount]) {
@@ -842,6 +1013,10 @@ function getEssenceRows() {
 }
 
 function renderEssence() {
+  // sync global limit inputs
+  document.getElementById('globalEssenceLimit').value = state.globalEssenceLimit || 250;
+  document.getElementById('globalFlowerLimit').value = state.globalFlowerLimit || 400;
+
   const rows = getEssenceRows();
   const tbody = document.getElementById('essenceBody');
   tbody.innerHTML = '';
@@ -852,17 +1027,38 @@ function renderEssence() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><input class="cell-input" value="${row.name}" onchange="updateEssenceRow(${i},'name',this.value)" style="min-width:100px"></td>
-      <td class="cell-white"><input class="cell-input" type="number" value="${row.essenceHave}" onchange="updateEssenceRow(${i},'essenceHave',+this.value)"></td>
+      <td class="cell-white"><input class="cell-input" type="number" value="${row.essenceHave}" onchange="updateEssenceRow(${i},'essenceHave',+this.value)"
+        onkeydown="essenceCellTab(event,${i},'essenceHave')"></td>
       <td class="cell-green"><input class="cell-input" type="number" value="${row.essenceLimit}" onchange="updateEssenceRow(${i},'essenceLimit',+this.value)" style="background:transparent;border-color:#2d5a2d;color:var(--green-text)"></td>
       <td class="cell-yellow" style="font-weight:800">${essenceNeed}</td>
       <td class="cell-green"><input class="cell-input" type="number" value="${row.flowerLimit}" onchange="updateEssenceRow(${i},'flowerLimit',+this.value)" style="background:transparent;border-color:#2d5a2d;color:var(--green-text)"></td>
-      <td class="cell-white"><input class="cell-input" type="number" value="${row.flowerHave}" onchange="updateEssenceRow(${i},'flowerHave',+this.value)"></td>
+      <td class="cell-white"><input class="cell-input" type="number" value="${row.flowerHave}" onchange="updateEssenceRow(${i},'flowerHave',+this.value)"
+        onkeydown="essenceCellTab(event,${i},'flowerHave')"></td>
       <td class="cell-yellow">${flowerCanCollect}</td>
       <td class="cell-yellow" style="color:${needConsume > 0 ? 'var(--accent5)' : 'var(--accent)'}">${needConsume}</td>
       <td><button class="btn-del" onclick="delEssenceRow(${i})">×</button></td>
     `;
     tbody.appendChild(tr);
   });
+}
+
+// Auto-advance to next row on Enter in essence/flower inputs
+function essenceCellTab(event, i, field) {
+  if (event.key === 'Enter' || event.key === 'Tab') {
+    event.preventDefault();
+    const rows = getEssenceRows();
+    const nextIdx = i + 1;
+    if (nextIdx < rows.length) {
+      // find next input of same field type
+      const inputs = document.querySelectorAll(`#essenceBody tr`);
+      if (inputs[nextIdx]) {
+        const colMap = { essenceHave: 1, flowerHave: 5 };
+        const col = colMap[field];
+        const inp = inputs[nextIdx].querySelectorAll('td')[col]?.querySelector('input');
+        if (inp) { inp.focus(); inp.select(); }
+      }
+    }
+  }
 }
 
 function updateEssenceRow(i, key, val) {
@@ -872,7 +1068,9 @@ function updateEssenceRow(i, key, val) {
 }
 
 function addEssenceRow() {
-  getEssenceRows().push({ name: '新花種', essenceHave: 0, essenceLimit: 250, flowerLimit: 400, flowerHave: 0 });
+  const elim = +document.getElementById('globalEssenceLimit').value || state.globalEssenceLimit || 250;
+  const flim = +document.getElementById('globalFlowerLimit').value || state.globalFlowerLimit || 400;
+  getEssenceRows().push({ name: '新花種', essenceHave: 0, essenceLimit: elim, flowerLimit: flim, flowerHave: 0 });
   save(); renderEssence();
 }
 
@@ -910,7 +1108,6 @@ function exportEssence() {
   const rows = getEssenceRows();
   if (rows.length === 0) { alert('目前沒有花種可匯出'); return; }
   const text = rows.map(r => `${r.name},${r.essenceLimit},${r.flowerLimit}`).join('\n');
-  // Copy to clipboard
   navigator.clipboard.writeText(text).then(() => {
     alert(`已複製到剪貼簿！（${rows.length} 種花）\n\n${text}`);
   }).catch(() => {
@@ -935,8 +1132,8 @@ function confirmImport() {
     const parts = line.split(',');
     if (parts.length < 1) return;
     const name = parts[0].trim();
-    const essenceLimit = parts[1] ? +parts[1].trim() : 250;
-    const flowerLimit = parts[2] ? +parts[2].trim() : 400;
+    const essenceLimit = parts[1] ? +parts[1].trim() : (state.globalEssenceLimit || 250);
+    const flowerLimit = parts[2] ? +parts[2].trim() : (state.globalFlowerLimit || 400);
     if (!name) { errors.push(`第${i+1}行：名稱為空`); return; }
     parsed.push({ name, essenceLimit, flowerLimit, essenceHave: 0, flowerHave: 0 });
   });
@@ -1004,22 +1201,18 @@ function getDailyRecord() {
     };
   }
   const r = state.dailyRecords[acct][today];
-  // migrate old single-essence field
-  if (r.essenceLeft !== undefined && r.essenceWhite === undefined) {
-    r.essenceWhite = r.essenceLeft; delete r.essenceLeft;
-  }
+  if (r.essenceLeft !== undefined && r.essenceWhite === undefined) { r.essenceWhite = r.essenceLeft; delete r.essenceLeft; }
   if (r.flowerCoins === undefined) r.flowerCoins = 0;
   if (r.essenceWhite === undefined) { r.essenceWhite = 0; r.essenceYellow = 0; r.essenceRed = 0; r.essenceBlue = 0; }
   if (r.flowerWhite === undefined) { r.flowerWhite = 0; r.flowerYellow = 0; r.flowerRed = 0; r.flowerBlue = 0; }
-  // migrate old single-stage fields to 3-column
-  if (r.levelStage !== undefined && r.levelStage1 === undefined) {
-    r.levelStage1 = r.levelStage; r.levelStage2 = ''; r.levelStage3 = ''; delete r.levelStage;
-  }
-  if (r.monthlyStage !== undefined && r.monthlyStage1 === undefined) {
-    r.monthlyStage1 = r.monthlyStage; r.monthlyStage2 = ''; r.monthlyStage3 = ''; delete r.monthlyStage;
-  }
+  if (r.levelStage !== undefined && r.levelStage1 === undefined) { r.levelStage1 = r.levelStage; r.levelStage2 = ''; r.levelStage3 = ''; delete r.levelStage; }
+  if (r.monthlyStage !== undefined && r.monthlyStage1 === undefined) { r.monthlyStage1 = r.monthlyStage; r.monthlyStage2 = ''; r.monthlyStage3 = ''; delete r.monthlyStage; }
   if (r.levelStage1 === undefined) { r.levelStage1 = ''; r.levelStage2 = ''; r.levelStage3 = ''; }
   if (r.monthlyStage1 === undefined) { r.monthlyStage1 = ''; r.monthlyStage2 = ''; r.monthlyStage3 = ''; }
+  // NEW: daily reset counts (v4)
+  if (r.mushCount === undefined) r.mushCount = 3;
+  if (r.raidCount === undefined) r.raidCount = 1;
+  if (r.sensorCount === undefined) r.sensorCount = 1;
   return r;
 }
 
@@ -1039,7 +1232,6 @@ function renderDaily() {
   const rec = getDailyRecord();
   const acct = state.currentAccount;
 
-  // Mushroom linkage
   const myMushrooms = state.mushrooms.filter(m => m.acct === acct);
   const activeMushrooms = myMushrooms.filter(m => m.expireAt > Date.now());
   const expiredMushrooms = myMushrooms.filter(m => m.expireAt <= Date.now());
@@ -1065,7 +1257,10 @@ function renderDaily() {
       </div>`;
   }
 
-  // Flower coin status
+  // Daily reset limits (editable)
+  const dailyLimits = state.dailyLimits || { mushCount: 3, raidCount: 1, sensorCount: 1 };
+  if (!state.dailyLimits) state.dailyLimits = dailyLimits;
+
   const coins = rec.flowerCoins || 0;
   const coinFull = coins >= 60;
   const coinColor = coinFull ? 'var(--accent)' : coins > 0 ? 'var(--accent3)' : 'var(--text3)';
@@ -1074,34 +1269,55 @@ function renderDaily() {
   const el = document.getElementById('dailySingleContent');
   el.innerHTML = `
     <div class="daily-grid">
+      <!-- 每日上限設定 -->
+      <div class="daily-item" style="grid-column: 1 / -1; background: var(--surface3); border-color: var(--border)">
+        <label style="color:var(--text3)">⚙️ 每日上限設定（全帳號共用）</label>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px">
+          ${[
+            { key:'mushCount', label:'🍄 可打菇次數', default:3 },
+            { key:'raidCount', label:'🆘 可求救次數', default:1 },
+            { key:'sensorCount', label:'📡 可探測器次數', default:1 },
+          ].map(f => `
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:0.78rem;color:var(--text2)">${f.label}</span>
+              <input type="number" min="0" max="99" value="${state.dailyLimits[f.key]||f.default}"
+                style="width:56px;background:var(--input-bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:6px;font-size:0.88rem;font-family:inherit"
+                onchange="updateDailyLimit('${f.key}',+this.value)">
+            </div>
+          `).join('')}
+        </div>
+      </div>
 
-      <!-- 計數器區 -->
+      <!-- 計數器 -->
       <div class="daily-item">
         <label>🍄 可打菇次數</label>
         <div class="counter-row">
           <button class="btn-counter" onclick="adjustDaily('mushCount',-1)">−</button>
-          <div class="counter-num">${rec.mushCount}</div>
+          <div class="counter-num" style="color:${rec.mushCount===0?'var(--accent5)':'var(--text)'}">${rec.mushCount}</div>
           <button class="btn-counter" onclick="adjustDaily('mushCount',1)">＋</button>
         </div>
+        <button class="toggle-btn" style="margin-top:8px;font-size:0.75rem" onclick="resetDailyCount('mushCount')">🔄 重置為 ${state.dailyLimits.mushCount||3}</button>
       </div>
       <div class="daily-item">
         <label>🆘 可求救次數</label>
         <div class="counter-row">
           <button class="btn-counter" onclick="adjustDaily('raidCount',-1)">−</button>
-          <div class="counter-num">${rec.raidCount}</div>
+          <div class="counter-num" style="color:${rec.raidCount===0?'var(--accent5)':'var(--text)'}">${rec.raidCount}</div>
           <button class="btn-counter" onclick="adjustDaily('raidCount',1)">＋</button>
         </div>
+        <button class="toggle-btn" style="margin-top:8px;font-size:0.75rem" onclick="resetDailyCount('raidCount')">🔄 重置為 ${state.dailyLimits.raidCount||1}</button>
       </div>
       <div class="daily-item">
         <label>📡 可探測器次數</label>
         <div class="counter-row">
           <button class="btn-counter" onclick="adjustDaily('sensorCount',-1)">−</button>
-          <div class="counter-num">${rec.sensorCount}</div>
+          <div class="counter-num" style="color:${rec.sensorCount===0?'var(--accent5)':'var(--text)'}">${rec.sensorCount}</div>
           <button class="btn-counter" onclick="adjustDaily('sensorCount',1)">＋</button>
         </div>
+        <button class="toggle-btn" style="margin-top:8px;font-size:0.75rem" onclick="resetDailyCount('sensorCount')">🔄 重置為 ${state.dailyLimits.sensorCount||1}</button>
       </div>
 
-      <!-- 種花＋金幣 -->
+      <!-- 種花金幣 -->
       <div class="daily-item" style="grid-column: span 2">
         <label>🌸 今日種花金幣</label>
         <div style="display:flex;align-items:center;gap:14px;margin-top:8px;flex-wrap:wrap">
@@ -1123,7 +1339,7 @@ function renderDaily() {
         </div>
       </div>
 
-      <!-- 精華剩餘（四色一行） -->
+      <!-- 精華剩餘 -->
       <div class="daily-item" style="grid-column: 1 / -1">
         <label>✨ 精華剩餘數量</label>
         <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
@@ -1133,19 +1349,21 @@ function renderDaily() {
             {key:'essenceYellow',label:'黃', color:'#d29922'},
             {key:'essenceRed',   label:'紅', color:'#ff7b72'},
             {key:'essenceBlue',  label:'藍', color:'#58a6ff'},
-          ].map(f => `
+          ].map((f, fi) => `
             <div style="display:flex;align-items:center;gap:4px">
               <span style="font-size:0.8rem;font-weight:700;color:${f.color}">${f.label}</span>
               <button class="btn-counter" onclick="adjustDaily('${f.key}',-1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">−</button>
-              <input type="number" class="cell-input" style="width:60px;text-align:center;font-size:1rem;font-weight:800;color:${f.color};background:transparent;border-color:${f.color}55;padding:4px 6px"
-                value="${rec[f.key]||0}" onchange="setDaily('${f.key}',+this.value)">
+              <input type="number" class="cell-input" id="daily-ess-${fi}"
+                style="width:60px;text-align:center;font-size:1rem;font-weight:800;color:${f.color};background:transparent;border-color:${f.color}55;padding:4px 6px"
+                value="${rec[f.key]||0}" onchange="setDaily('${f.key}',+this.value)"
+                onkeydown="dailyFieldTab(event,${fi})">
               <button class="btn-counter" onclick="adjustDaily('${f.key}',1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">＋</button>
             </div>
           `).join('')}
         </div>
       </div>
 
-      <!-- 花朵剩餘（四色一行） -->
+      <!-- 花朵剩餘 -->
       <div class="daily-item" style="grid-column: 1 / -1">
         <label>🌸 花朵剩餘數量</label>
         <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
@@ -1155,12 +1373,14 @@ function renderDaily() {
             {key:'flowerYellow',label:'黃', color:'#d29922'},
             {key:'flowerRed',   label:'紅', color:'#ff7b72'},
             {key:'flowerBlue',  label:'藍', color:'#58a6ff'},
-          ].map(f => `
+          ].map((f, fi) => `
             <div style="display:flex;align-items:center;gap:4px">
               <span style="font-size:0.8rem;font-weight:700;color:${f.color}">${f.label}</span>
               <button class="btn-counter" onclick="adjustDaily('${f.key}',-1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">−</button>
-              <input type="number" class="cell-input" style="width:60px;text-align:center;font-size:1rem;font-weight:800;color:${f.color};background:transparent;border-color:${f.color}55;padding:4px 6px"
-                value="${rec[f.key]||0}" onchange="setDaily('${f.key}',+this.value)">
+              <input type="number" class="cell-input" id="daily-fl-${fi}"
+                style="width:60px;text-align:center;font-size:1rem;font-weight:800;color:${f.color};background:transparent;border-color:${f.color}55;padding:4px 6px"
+                value="${rec[f.key]||0}" onchange="setDaily('${f.key}',+this.value)"
+                onkeydown="dailyFieldTab(event,${fi + 4})">
               <button class="btn-counter" onclick="adjustDaily('${f.key}',1)" style="border-color:${f.color}55;width:24px;height:24px;font-size:0.9rem">＋</button>
             </div>
           `).join('')}
@@ -1185,6 +1405,34 @@ function renderDaily() {
       ${renderDailyHistory()}
     </div>
   `;
+}
+
+// Tab through all 8 daily fields in order:
+// 0-3: 精華白黃紅藍 → 4-7: 花朵白黃紅藍
+const DAILY_FIELD_IDS = [
+  'daily-ess-0','daily-ess-1','daily-ess-2','daily-ess-3',
+  'daily-fl-0', 'daily-fl-1', 'daily-fl-2', 'daily-fl-3',
+];
+function dailyFieldTab(event, idx) {
+  if (event.key === 'Enter' || event.key === 'Tab') {
+    event.preventDefault();
+    const nextIdx = (idx + 1) % DAILY_FIELD_IDS.length;
+    const el = document.getElementById(DAILY_FIELD_IDS[nextIdx]);
+    if (el) { el.focus(); el.select(); }
+  }
+}
+
+function updateDailyLimit(key, val) {
+  if (!state.dailyLimits) state.dailyLimits = { mushCount: 3, raidCount: 1, sensorCount: 1 };
+  state.dailyLimits[key] = val;
+  save();
+}
+
+function resetDailyCount(key) {
+  const lim = (state.dailyLimits && state.dailyLimits[key]) || (key === 'mushCount' ? 3 : 1);
+  const rec = getDailyRecord();
+  rec[key] = lim;
+  save(); renderDaily();
 }
 
 function renderDailyHistory() {
@@ -1244,89 +1492,55 @@ function renderDailyHistory() {
 
 function renderDailyOverview() {
   const el = document.getElementById('dailyOverviewContent');
-
   const allDates = new Set();
-  state.accounts.forEach(acct => {
-    Object.keys(state.dailyRecords[acct] || {}).forEach(d => allDates.add(d));
-  });
+  state.accounts.forEach(acct => { Object.keys(state.dailyRecords[acct] || {}).forEach(d => allDates.add(d)); });
   const dates = [...allDates].sort().reverse();
-
-  if (dates.length === 0) {
-    el.innerHTML = '<div class="empty-state">尚無任何紀錄</div>'; return;
-  }
-
+  if (dates.length === 0) { el.innerHTML = '<div class="empty-state">尚無任何紀錄</div>'; return; }
   const c = (val, color) => `<span style="color:${color};font-weight:700">${val||0}</span>`;
-
   const html = dates.map(d => {
     const rows = state.accounts.map(acct => {
       const r = (state.dailyRecords[acct] || {})[d];
-      if (!r) return `
-        <tr>
-          <td rowspan="2" style="font-weight:800;color:var(--accent2);white-space:nowrap">${acct}</td>
-          <td colspan="9" style="color:var(--text3);font-size:0.8rem">無紀錄</td>
-        </tr><tr></tr>`;
-
+      if (!r) return `<tr><td rowspan="2" style="font-weight:800;color:var(--accent2);white-space:nowrap">${acct}</td><td colspan="9" style="color:var(--text3);font-size:0.8rem">無紀錄</td></tr><tr></tr>`;
       const coins = r.flowerCoins || 0;
-      const coinStr = coins >= 60
-        ? `<span style="color:var(--accent);font-weight:800">✅60</span>`
-        : coins > 0 ? `<span style="color:var(--accent3)">${coins}</span>` : '—';
+      const coinStr = coins >= 60 ? `<span style="color:var(--accent);font-weight:800">✅60</span>` : coins > 0 ? `<span style="color:var(--accent3)">${coins}</span>` : '—';
       const ls = r.levelStage1 ?? r.levelStage ?? '';
-      const ms = r.monthlyStage1 ?? r.monthlyStage ?? '';
       const myMush = state.mushrooms.filter(m => m.acct === acct && m.expireAt > Date.now());
       const mushStr = myMush.length > 0 ? `<span style="color:var(--accent3)">🍄${myMush.length}</span>` : '—';
-
       return `
         <tr>
           <td rowspan="2" style="font-weight:800;color:var(--accent2);white-space:nowrap">${acct}</td>
-          <td rowspan="2">${r.mushCount??'—'}</td>
-          <td rowspan="2">${r.raidCount??'—'}</td>
-          <td rowspan="2">${r.sensorCount??'—'}</td>
-          <td rowspan="2">${coinStr}</td>
-          <td>${c(r.essenceWhite||r.essenceLeft,'#e6edf3')}</td>
-          <td>${c(r.essenceYellow,'#d29922')}</td>
-          <td>${c(r.essenceRed,'#ff7b72')}</td>
-          <td>${c(r.essenceBlue,'#58a6ff')}</td>
+          <td rowspan="2">${r.mushCount??'—'}</td><td rowspan="2">${r.raidCount??'—'}</td>
+          <td rowspan="2">${r.sensorCount??'—'}</td><td rowspan="2">${coinStr}</td>
+          <td>${c(r.essenceWhite||r.essenceLeft,'#e6edf3')}</td><td>${c(r.essenceYellow,'#d29922')}</td>
+          <td>${c(r.essenceRed,'#ff7b72')}</td><td>${c(r.essenceBlue,'#58a6ff')}</td>
           <td rowspan="2">${mushStr}</td>
           <td rowspan="2" style="font-size:0.8rem;white-space:pre-wrap;max-width:120px">${ls||'—'}</td>
-          <td rowspan="2" style="font-size:0.8rem;white-space:pre-wrap;max-width:120px">${ms||'—'}</td>
         </tr>
         <tr>
-          <td>${c(r.flowerWhite,'#e6edf3')}</td>
-          <td>${c(r.flowerYellow,'#d29922')}</td>
-          <td>${c(r.flowerRed,'#ff7b72')}</td>
-          <td>${c(r.flowerBlue,'#58a6ff')}</td>
+          <td>${c(r.flowerWhite,'#e6edf3')}</td><td>${c(r.flowerYellow,'#d29922')}</td>
+          <td>${c(r.flowerRed,'#ff7b72')}</td><td>${c(r.flowerBlue,'#58a6ff')}</td>
         </tr>`;
     }).join('');
-
     return `<div class="card" style="margin-bottom:14px">
       <div class="card-title" style="font-size:0.9rem">📅 ${d}</div>
       <div style="overflow-x:auto"><table>
         <thead>
-          <tr>
-            <th rowspan="2">帳號</th>
-            <th rowspan="2">菇</th><th rowspan="2">求救</th><th rowspan="2">探測</th><th rowspan="2">金幣</th>
-            <th style="color:#e6edf3">白精</th><th style="color:#d29922">黃精</th>
-            <th style="color:#ff7b72">紅精</th><th style="color:#58a6ff">藍精</th>
-            <th rowspan="2">卡菇</th>
-            <th rowspan="2">等級任務</th><th rowspan="2">每月任務</th>
-          </tr>
-          <tr>
-            <th style="color:#e6edf3">白花</th><th style="color:#d29922">黃花</th>
-            <th style="color:#ff7b72">紅花</th><th style="color:#58a6ff">藍花</th>
-          </tr>
+          <tr><th rowspan="2">帳號</th><th rowspan="2">菇</th><th rowspan="2">求救</th><th rowspan="2">探測</th><th rowspan="2">金幣</th>
+          <th style="color:#e6edf3">白精</th><th style="color:#d29922">黃精</th><th style="color:#ff7b72">紅精</th><th style="color:#58a6ff">藍精</th>
+          <th rowspan="2">卡菇</th><th rowspan="2">等級任務</th></tr>
+          <tr><th style="color:#e6edf3">白花</th><th style="color:#d29922">黃花</th><th style="color:#ff7b72">紅花</th><th style="color:#58a6ff">藍花</th></tr>
         </thead>
         <tbody>${rows}</tbody>
       </table></div>
     </div>`;
   }).join('');
-
   el.innerHTML = html;
 }
 
 function setFlowerCoins(v) {
   const rec = getDailyRecord();
   rec.flowerCoins = v;
-  if (v >= 60) rec.flowerDone = true; // 自動標記種完
+  if (v >= 60) rec.flowerDone = true;
   save(); renderDaily();
 }
 
@@ -1345,75 +1559,98 @@ function setDaily(key, val) {
 }
 
 // ─── 3. Mushrooms ─────────────────────────────────────────
-let mushMode = 'account'; // 'account' | 'reset'
-
-function fillFlowerTimeNow() {
-  const now = new Date();
-  const hh = String(now.getHours()).padStart(2,'0');
-  const mm = String(now.getMinutes()).padStart(2,'0');
-  document.getElementById('fl-pt-time').value = `${hh}:${mm}`;
-}
-
-function fillTWNow() {
-  // mush-reset-time field removed, this function is kept for compatibility
-  const el = document.getElementById('mush-reset-time');
-  if (el) {
-    const now = new Date();
-    const twTime = new Date(now.getTime() + 8 * 3600000);
-    el.value = `${String(twTime.getUTCHours()).padStart(2,'0')}:${String(twTime.getUTCMinutes()).padStart(2,'0')}`;
-  }
-}
+let mushMode = 'account';
 
 function setMushMode(mode) {
   mushMode = mode;
-  document.getElementById('modeAccountFields').style.display = mode === 'account' ? 'flex' : 'none';
-  document.getElementById('modeResetFields').style.display = mode === 'reset' ? 'flex' : 'none';
-  document.getElementById('modeAccountBtn').className = 'toggle-btn' + (mode === 'account' ? ' yes' : '');
-  document.getElementById('modeResetBtn').className = 'toggle-btn' + (mode === 'reset' ? ' yes' : '');
+  document.getElementById('mushPanelAccount').style.display = mode === 'account' ? 'block' : 'none';
+  document.getElementById('mushPanelReset').style.display = mode === 'reset' ? 'block' : 'none';
+  document.getElementById('mushPanelHistory').style.display = mode === 'history' ? 'block' : 'none';
+
+  document.getElementById('mushModeAccountTab').className = 'tab-inner' + (mode === 'account' ? ' active' : '');
+  document.getElementById('mushModeResetTab').className = 'tab-inner' + (mode === 'reset' ? ' active' : '');
+  document.getElementById('mushModeHistoryTab').className = 'tab-inner' + (mode === 'history' ? ' active' : '');
+
+  // Show/hide sections
+  document.getElementById('mushSectionActive').style.display = mode === 'history' ? 'none' : 'block';
+  document.getElementById('mushSectionArchive').style.display = mode === 'history' ? 'block' : 'none';
+
+  if (mode === 'reset') initTzInfoBar();
+  renderMushrooms();
 }
 
-function calcNextReset(inputTimeStr) {
-  // inputTimeStr: "HH:MM" in Taiwan time (UTC+8)
-  // Find next 04:00 Taiwan time from that input time
+function fillFlowerTimeNow() {
   const now = new Date();
-  const [h, m] = inputTimeStr.split(':').map(Number);
-  // Build a Date representing "today in TW at h:m"
-  // TW offset = UTC+8, so TW time = UTC + 8h
-  const utcNow = Date.now();
-  // Use current date in TW
-  const twOffset = 8 * 3600000;
-  const twNow = new Date(utcNow + twOffset);
-  // Set input time on today TW date
-  let candidate = new Date(Date.UTC(twNow.getUTCFullYear(), twNow.getUTCMonth(), twNow.getUTCDate(), h - 8, m, 0));
-  // Next 04:00 TW = 20:00 UTC previous day
-  // 04:00 TW = 04:00 - 8 = -4:00 = 20:00 UTC (day before)
-  let next0400utc = new Date(Date.UTC(twNow.getUTCFullYear(), twNow.getUTCMonth(), twNow.getUTCDate(), 20, 0, 0)); // 04:00 TW next day
-  // If current TW time is before 04:00, next reset is today's 04:00 TW (= yesterday 20:00 UTC? No...)
-  // Simpler: compute TW hour
-  const twHour = twNow.getUTCHours() + 8 < 24 ? twNow.getUTCHours() + 8 : twNow.getUTCHours() + 8 - 24;
-  const twHourInput = h;
-  // Next 04:00 TW from input time
-  // If input time < 04:00 → next reset is same TW date at 04:00
-  // If input time >= 04:00 → next reset is next TW date at 04:00
-  const twDate = new Date(utcNow + twOffset); // current TW date/time as UTC object with TW values
-  let resetTW; // will be a UTC timestamp for next 04:00 TW
-  // Build from candidate date
-  const twYear = twDate.getUTCFullYear();
-  const twMonth = twDate.getUTCMonth();
-  const twDay = twDate.getUTCDate();
-  if (twHourInput < 4) {
-    // next 04:00 is today TW
-    resetTW = Date.UTC(twYear, twMonth, twDay, 4 - 8 + 24, 0, 0); // 04:00 TW = 20:00 UTC prev day... use simpler calc
-    // 04:00 TW = UTC 04:00 - 08:00 = UTC -4 → UTC 20:00 previous day
-    resetTW = Date.UTC(twYear, twMonth, twDay, 0, 0, 0) - twOffset + 4 * 3600000;
-  } else {
-    // next 04:00 is tomorrow TW
-    resetTW = Date.UTC(twYear, twMonth, twDay + 1, 0, 0, 0) - twOffset + 4 * 3600000;
+  document.getElementById('fl-pt-time').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+}
+
+// Auto-detect timezone offset vs Taiwan (UTC+8)
+// Returns offset in integer hours: TW_time = local_time + tzOffsetHours
+// e.g. browser is Japan (UTC+9): offset = 8 - 9 = -1, TW = local - 1
+// e.g. browser is UK (UTC+0): offset = 8 - 0 = 8
+function getAutoTzOffset() {
+  // Browser's UTC offset in minutes (negative means ahead of UTC, e.g. JST = -540)
+  const localOffsetMin = new Date().getTimezoneOffset(); // minutes behind UTC
+  const localOffsetHours = -localOffsetMin / 60; // convert: JST = +9
+  const twOffsetHours = 8; // UTC+8
+  // TW time = local time + (TW_UTC_offset - local_UTC_offset)
+  return twOffsetHours - localOffsetHours;
+}
+
+function getTzLabel() {
+  const offset = getAutoTzOffset();
+  const localOffsetHours = 8 - offset;
+  const sign = localOffsetHours >= 0 ? '+' : '';
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return `目前裝置時區：${tz}（UTC${sign}${localOffsetHours}）`;
+  } catch(e) {
+    return `目前裝置時區：UTC${sign}${localOffsetHours}`;
   }
-  // inputTime as UTC timestamp (today TW date at input time)
-  const inputUTC = Date.UTC(twYear, twMonth, twDay, 0, 0, 0) - twOffset + twHourInput * 3600000 + m * 60000;
-  const remaining = resetTW - inputUTC;
-  return { expireAt: Date.now() + (resetTW - inputUTC), remaining };
+}
+
+function initTzInfoBar() {
+  const el = document.getElementById('tz-auto-label');
+  if (!el) return;
+  const offset = getAutoTzOffset();
+  const sign = offset >= 0 ? '+' : '';
+  el.textContent = getTzLabel() + `　｜　台灣時間 = 當地時間 ${sign}${offset}h`;
+}
+
+function fillLocalTimeNow() {
+  const now = new Date();
+  document.getElementById('mush-local-time').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  previewResetTime();
+}
+
+function previewResetTime() {
+  const localTimeStr = document.getElementById('mush-local-time').value;
+  const preview = document.getElementById('tz-preview');
+  if (!localTimeStr) { preview.textContent = ''; return; }
+  const offset = getAutoTzOffset(); // auto
+  const [lh, lm] = localTimeStr.split(':').map(Number);
+  const twMins = (lh * 60 + lm + offset * 60 + 24*60*2) % (24*60);
+  const twH = Math.floor(twMins / 60);
+  const twM = twMins % 60;
+  // Also show TW expire time (04:00 local → TW)
+  const twExpMins = (4 * 60 + offset * 60 + 24*60*2) % (24*60);
+  const twExpH = Math.floor(twExpMins / 60);
+  const twExpM = twExpMins % 60;
+  preview.innerHTML = `台灣時間：<strong>${String(twH).padStart(2,'0')}:${String(twM).padStart(2,'0')}</strong>　到期台灣時間：<strong>${String(twExpH).padStart(2,'0')}:${String(twExpM).padStart(2,'0')}</strong>`;
+}
+
+/**
+ * Calculate next reset (04:00 LOCAL TIME) expressed as expireAt UTC timestamp.
+ * Uses auto-detected browser timezone.
+ */
+function calcNextResetLocal(localTimeStr) {
+  const [lh, lm] = localTimeStr.split(':').map(Number);
+  const localMins = lh * 60 + lm;
+  const reset04Mins = 4 * 60;
+  let diffMins = localMins < reset04Mins
+    ? reset04Mins - localMins
+    : (24 * 60 - localMins) + reset04Mins;
+  return { expireAt: Date.now() + diffMins * 60000 };
 }
 
 function updateMushroomAccountSelect() {
@@ -1423,14 +1660,32 @@ function updateMushroomAccountSelect() {
   sel.value = state.currentAccount;
 }
 
-function addMushroom() {
-  const coord = document.getElementById('mush-coord').value.trim();
-  const name = document.getElementById('mush-name').value.trim();
+// Coord copy
+function copyCoord(coord) {
+  if (!coord) return;
+  navigator.clipboard.writeText(coord).then(() => showCopyToast('✅ 座標已複製：' + coord)).catch(() => {
+    prompt('請手動複製：', coord);
+  });
+}
+
+function showCopyToast(msg) {
+  const t = document.getElementById('copyToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function addMushroom(mode) {
+  const isReset = mode === 'reset';
+  const suffix = isReset ? '-r' : '';
+  const coord = document.getElementById('mush-coord' + suffix).value.trim();
+  const name = document.getElementById('mush-name' + suffix).value.trim();
+  const category = document.getElementById('mush-category' + suffix).value.trim();
   if (!coord && !name) { alert('請填入座標或地點名稱'); return; }
 
-  let expireAt, acct, resetMode = false;
+  let expireAt, acct, resetMode = false, localTime = null, tzOffset = 0, twExpireTime = null;
 
-  if (mushMode === 'account') {
+  if (!isReset) {
     acct = document.getElementById('mush-acct').value;
     const days = +document.getElementById('mush-days').value || 0;
     const hours = +document.getElementById('mush-hours').value || 0;
@@ -1439,17 +1694,31 @@ function addMushroom() {
   } else {
     acct = '（無人卡）';
     resetMode = true;
-    // 登錄當下自動取台灣時間
-    const twNow = new Date(Date.now() + 8 * 3600000);
-    const timeStr = `${String(twNow.getUTCHours()).padStart(2,'0')}:${String(twNow.getUTCMinutes()).padStart(2,'0')}`;
-    const result = calcNextReset(timeStr);
+    const localTimeStr = document.getElementById('mush-local-time').value;
+    if (!localTimeStr) { alert('請填入當地時間'); return; }
+    tzOffset = getAutoTzOffset(); // auto-detected
+    localTime = localTimeStr;
+    const result = calcNextResetLocal(localTimeStr);
     expireAt = result.expireAt;
+    // Calculate TW expire time: 04:00 local → TW
+    const twExpMins = (4 * 60 + tzOffset * 60 + 24*60*2) % (24*60);
+    const twExpH = Math.floor(twExpMins / 60);
+    const twExpM = twExpMins % 60;
+    twExpireTime = `${String(twExpH).padStart(2,'0')}:${String(twExpM).padStart(2,'0')} TW`;
   }
 
-  state.mushrooms.push({ id: Date.now(), coord, name, acct, expireAt, resetMode });
+  state.mushrooms.push({ id: Date.now(), coord, name, category: category || '', acct, expireAt, resetMode, localTime, tzOffset, twExpireTime });
   save();
-  document.getElementById('mush-coord').value = '';
-  document.getElementById('mush-name').value = '';
+
+  // Clear fields
+  document.getElementById('mush-coord' + suffix).value = '';
+  document.getElementById('mush-name' + suffix).value = '';
+  document.getElementById('mush-category' + suffix).value = '';
+  if (!isReset) {
+    document.getElementById('mush-days').value = 0;
+    document.getElementById('mush-hours').value = 0;
+    document.getElementById('mush-mins').value = 0;
+  }
   renderMushrooms();
 }
 
@@ -1458,25 +1727,17 @@ function delMushroom(id) {
   save(); renderMushrooms();
 }
 
-function toggleArchive() {
-  const el = document.getElementById('mushroomArchive');
-  const arrow = document.getElementById('archiveArrow');
-  const open = el.style.display === 'none';
-  el.style.display = open ? 'block' : 'none';
-  arrow.textContent = open ? '▼ 收起' : '▶ 展開';
-}
-
 function openMushroomEdit(id) {
   const m = state.mushrooms.find(x => x.id === id);
   if (!m) return;
   document.getElementById('edit-mush-id').value = id;
   document.getElementById('edit-mush-coord').value = m.coord || '';
   document.getElementById('edit-mush-name').value = m.name || '';
+  document.getElementById('edit-mush-category').value = m.category || '';
   const sel = document.getElementById('edit-mush-acct');
   sel.innerHTML = ['（無人卡）', ...state.accounts].map(a => `<option value="${a}">${a}</option>`).join('');
   sel.value = m.acct || '（無人卡）';
 
-  // Pre-fill remaining time
   const remaining = Math.max(0, m.expireAt - Date.now());
   const d = Math.floor(remaining / 86400000);
   const h = Math.floor((remaining % 86400000) / 3600000);
@@ -1484,43 +1745,47 @@ function openMushroomEdit(id) {
   document.getElementById('edit-mush-days').value = d;
   document.getElementById('edit-mush-hours').value = h;
   document.getElementById('edit-mush-mins').value = min;
-
-  // Show current status
-  const timerLabel = remaining <= 0
-    ? '⚠️ 已重置'
-    : `⏳ 目前剩餘：${d>0?d+'天':''}${h}時${min}分`;
-  document.getElementById('edit-mush-current-timer').textContent = timerLabel;
-
+  document.getElementById('edit-mush-current-timer').textContent = remaining <= 0 ? '⚠️ 已重置' : `⏳ 目前剩餘：${d>0?d+'天':''}${h}時${min}分`;
   document.getElementById('mushroomEditModal').classList.add('open');
 }
 
-function closeMushroomEdit() {
-  document.getElementById('mushroomEditModal').classList.remove('open');
-}
+function closeMushroomEdit() { document.getElementById('mushroomEditModal').classList.remove('open'); }
 
 function saveMushroomEdit() {
   const id = +document.getElementById('edit-mush-id').value;
   const m = state.mushrooms.find(x => x.id === id);
   if (!m) return;
   m.coord = document.getElementById('edit-mush-coord').value.trim();
-  m.name  = document.getElementById('edit-mush-name').value.trim();
-  m.acct  = document.getElementById('edit-mush-acct').value;
-  const days  = +document.getElementById('edit-mush-days').value || 0;
+  m.name = document.getElementById('edit-mush-name').value.trim();
+  m.category = document.getElementById('edit-mush-category').value.trim();
+  m.acct = document.getElementById('edit-mush-acct').value;
+  const days = +document.getElementById('edit-mush-days').value || 0;
   const hours = +document.getElementById('edit-mush-hours').value || 0;
-  const mins  = +document.getElementById('edit-mush-mins').value || 0;
-  // Always apply timer (pre-filled = keep same, changed = new countdown from now)
+  const mins = +document.getElementById('edit-mush-mins').value || 0;
   m.expireAt = Date.now() + (days*86400 + hours*3600 + mins*60) * 1000;
   m.resetMode = m.acct === '（無人卡）';
   save(); closeMushroomEdit(); renderMushrooms();
 }
 
+// Detect "active spots": coordinates that appear 2+ times in archived mushrooms
+function getActiveSpotCoords() {
+  const archived = state.mushrooms.filter(m => m.expireAt <= Date.now());
+  const countMap = {};
+  archived.forEach(m => {
+    const key = m.coord?.trim();
+    if (!key) return;
+    countMap[key] = (countMap[key] || 0) + 1;
+  });
+  return new Set(Object.entries(countMap).filter(([,cnt]) => cnt >= 2).map(([k]) => k));
+}
+
 function renderMushrooms() {
   updateMushroomAccountSelect();
   const now = Date.now();
-  const active   = state.mushrooms.filter(m => m.expireAt > now);
+  const active = state.mushrooms.filter(m => m.expireAt > now);
   const archived = state.mushrooms.filter(m => m.expireAt <= now);
+  const activeSpotCoords = getActiveSpotCoords();
 
-  // update archive count badge
   document.getElementById('archiveCount').textContent = archived.length > 0 ? `(${archived.length})` : '';
 
   const makeCard = (m, isArchived) => {
@@ -1533,19 +1798,42 @@ function renderMushrooms() {
     const isNoAcct = m.resetMode || m.acct === '（無人卡）';
     const acctColor = isNoAcct ? 'var(--text3)' : 'var(--accent2)';
     const acctLabel = isNoAcct ? '🕓 無人卡' : `👤 ${m.acct}`;
-    const expireTW = new Date(m.expireAt + 8*3600000);
-    const expireStr = `${String(expireTW.getUTCHours()).padStart(2,'0')}:${String(expireTW.getUTCMinutes()).padStart(2,'0')} TW`;
 
-    return `<div class="mushroom-item" style="${isArchived?'opacity:0.6;background:#1a1a1a':''}">
+    // Expire time display
+    let expireLabel;
+    if (m.twExpireTime) {
+      // reset mode: show local 04:00 + TW time
+      const localH = (4 + 24) % 24;
+      expireLabel = `到期：當地 04:00 / ${m.twExpireTime}`;
+    } else {
+      const expireTW = new Date(m.expireAt + 8*3600000);
+      expireLabel = `${isArchived?'重置於':'到期：'}${String(expireTW.getUTCHours()).padStart(2,'0')}:${String(expireTW.getUTCMinutes()).padStart(2,'0')} TW`;
+    }
+
+    const isActiveSpot = activeSpotCoords.has(m.coord?.trim());
+    const activeSpotBadge = isActiveSpot ? `<span class="active-spot-badge">🔥 活躍菇點</span>` : '';
+    const categoryBadge = m.category ? `<span class="mush-category-badge">${m.category}</span>` : '';
+
+    const cardClass = `mushroom-item${isActiveSpot ? ' is-active-spot' : ''}`;
+
+    return `<div class="${cardClass}" style="${isArchived?'opacity:0.7;background:#1a1a1a':''}">
       <div>
-        <div class="mushroom-coord">${m.coord || '—'}</div>
+        <div class="mushroom-coord" onclick="copyCoord('${(m.coord||'').replace(/'/g,"\\'")}')" title="點擊複製座標">
+          ${m.coord || '—'}
+          <span class="copy-hint">📋 複製</span>
+        </div>
         <div style="font-weight:700;margin-top:2px">${m.name || '—'}</div>
-        <div class="mushroom-acct" style="color:${acctColor};margin-top:2px">${acctLabel}</div>
+        <div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">
+          ${categoryBadge}
+          ${activeSpotBadge}
+        </div>
+        <div class="mushroom-acct" style="color:${acctColor};margin-top:4px">${acctLabel}</div>
       </div>
       <div>
         <div style="font-size:0.75rem;color:var(--text3);margin-bottom:2px">${isArchived?'已重置':'剩餘時間'}</div>
         <div class="mushroom-timer ${expired?'expired':''}">${timerStr}</div>
-        <div style="font-size:0.72rem;color:var(--text3);margin-top:3px">${isArchived?'重置於':'到期：'}${expireStr}</div>
+        <div style="font-size:0.72rem;color:var(--text3);margin-top:3px">${expireLabel}</div>
+        ${m.localTime ? `<div style="font-size:0.7rem;color:var(--text3);margin-top:2px">當地登錄：${m.localTime}（時差+${m.tzOffset||0}h）</div>` : ''}
       </div>
       <div style="display:flex;flex-direction:column;gap:4px">
         <button class="btn-counter" style="width:auto;padding:0 10px;font-size:0.78rem;color:var(--accent2)" onclick="openMushroomEdit(${m.id})">✏️</button>
@@ -1554,24 +1842,18 @@ function renderMushrooms() {
     </div>`;
   };
 
-  // active list
   const activeList = document.getElementById('mushroomList');
   if (active.length === 0) {
     activeList.innerHTML = '<div class="empty-state">尚無活躍菇點 🍄</div>';
   } else {
-    activeList.innerHTML = active
-      .sort((a,b) => a.expireAt - b.expireAt)
-      .map(m => makeCard(m, false)).join('');
+    activeList.innerHTML = active.sort((a,b) => a.expireAt - b.expireAt).map(m => makeCard(m, false)).join('');
   }
 
-  // archive list
   const archiveList = document.getElementById('mushroomArchiveList');
   if (archived.length === 0) {
     archiveList.innerHTML = '<div class="empty-state">無封存菇點</div>';
   } else {
-    archiveList.innerHTML = archived
-      .sort((a,b) => b.expireAt - a.expireAt)
-      .map(m => makeCard(m, true)).join('');
+    archiveList.innerHTML = archived.sort((a,b) => b.expireAt - a.expireAt).map(m => makeCard(m, true)).join('');
   }
 }
 
@@ -1580,12 +1862,63 @@ function updateMushroomTimers() {
   renderMushrooms();
 }
 
+// ─── Category Management ──────────────────────────────────
+function renderCategoryDatalist() {
+  const dl = document.getElementById('categoryList');
+  if (!dl) return;
+  const cats = state.mushCategories || [];
+  dl.innerHTML = cats.map(c => `<option value="${c}">`).join('');
+}
+
+function openCategoryManager() {
+  renderCategoryListEdit();
+  document.getElementById('categoryModal').classList.add('open');
+  setTimeout(() => document.getElementById('newCategoryInput').focus(), 100);
+}
+
+function closeCategoryManager() {
+  document.getElementById('categoryModal').classList.remove('open');
+  renderCategoryDatalist();
+}
+
+function renderCategoryListEdit() {
+  const el = document.getElementById('categoryListEdit');
+  const cats = state.mushCategories || [];
+  el.innerHTML = cats.map((c, i) => `
+    <div style="display:flex;align-items:center;gap:8px">
+      <input class="cell-input" value="${c}" style="flex:1" onchange="updateCategory(${i},this.value)">
+      <button class="btn-del" onclick="deleteCategory(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+function addCategory() {
+  const val = document.getElementById('newCategoryInput').value.trim();
+  if (!val) return;
+  if (!state.mushCategories) state.mushCategories = [];
+  if (state.mushCategories.includes(val)) { alert('類別已存在'); return; }
+  state.mushCategories.push(val);
+  save();
+  document.getElementById('newCategoryInput').value = '';
+  renderCategoryListEdit();
+}
+
+function updateCategory(i, val) {
+  state.mushCategories[i] = val;
+  save();
+}
+
+function deleteCategory(i) {
+  state.mushCategories.splice(i, 1);
+  save();
+  renderCategoryListEdit();
+}
+
 // ─── 4. Flower Calculator ─────────────────────────────────
 let flowerPoints = [];
 
 function getFlowerHistory() {
-  if (!state.flowerHistory[state.currentAccount])
-    state.flowerHistory[state.currentAccount] = [];
+  if (!state.flowerHistory[state.currentAccount]) state.flowerHistory[state.currentAccount] = [];
   return state.flowerHistory[state.currentAccount];
 }
 
@@ -1596,32 +1929,44 @@ function renderFlower() {
   renderFlowerHistory();
 }
 
+// Auto-advance between flower inputs on Enter
+function flowerInputKeydown(event, fromId, toId) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    if (toId) {
+      const el = document.getElementById(toId);
+      if (el) { el.focus(); el.select(); }
+    } else {
+      // last field: trigger add
+      addFlowerPoint();
+    }
+  }
+}
+
 function addFlowerPoint() {
-  const time    = document.getElementById('fl-pt-time').value;
+  const time = document.getElementById('fl-pt-time').value;
   const flowers = document.getElementById('fl-pt-flowers').value;
-  const mini    = +document.getElementById('fl-pt-mini').value;
-  const pikmin  = +document.getElementById('fl-pikmin').value;
-  const isSwap  = document.getElementById('fl-pt-swap').checked;
-  if (!time)             { alert('請填入時間'); return; }
-  if (!pikmin)           { alert('請填入皮克敏數'); return; }
-  if (flowers === '')    { alert('請填入花朵數'); return; }
+  const mini = +document.getElementById('fl-pt-mini').value;
+  const pikmin = +document.getElementById('fl-pikmin').value;
+  const isSwap = document.getElementById('fl-pt-swap').checked;
+  if (!time) { alert('請填入時間'); return; }
+  if (!pikmin) { alert('請填入皮克敏數'); return; }
+  if (flowers === '') { alert('請填入花朵數'); return; }
   flowerPoints.push({ time, flowers: +flowers, mini: mini||0, pikmin, isSwap });
   flowerPoints.sort((a, b) => a.time.localeCompare(b.time));
   document.getElementById('fl-pt-flowers').value = '';
   document.getElementById('fl-pt-mini').value = '';
   document.getElementById('fl-pt-swap').checked = false;
+  // Focus back on flowers input for next entry
+  document.getElementById('fl-pt-flowers').focus();
   renderFlowerPoints();
 }
 
-function delFlowerPoint(i) {
-  flowerPoints.splice(i, 1);
-  renderFlowerPoints();
-}
+function delFlowerPoint(i) { flowerPoints.splice(i, 1); renderFlowerPoints(); }
 
 function clearFlowerPoints() {
   if (flowerPoints.length > 0 && !confirm('確定清除所有打點？')) return;
-  flowerPoints = [];
-  renderFlowerPoints();
+  flowerPoints = []; renderFlowerPoints();
 }
 
 function renderFlowerPoints() {
@@ -1636,24 +1981,19 @@ function renderFlowerPoints() {
     let rowStyle = '';
 
     if (pt.isSwap) {
-      // 換花點：整行標示，不計算
       usedCell = `<span style="color:var(--accent2);font-weight:700">🔄 換花</span>`;
       rowStyle = 'background:rgba(88,166,255,0.07)';
     } else if (i > 0) {
-      // 找前一個非換花點作為計算基準
       let prevIdx = i - 1;
-      // 如果前一點是換花點，從換花點的花數開始（時間仍用換花點）
       const prev = flowerPoints[prevIdx];
       const [ph,pm2] = prev.time.split(':').map(Number);
-      const [ch,cm]  = pt.time.split(':').map(Number);
+      const [ch,cm] = pt.time.split(':').map(Number);
       let mins = (ch*60+cm)-(ph*60+pm2);
       if (mins < 0) mins += 24*60;
-      // 若前一點是換花點，消耗花從換花點花數算起，但時間段正常計
       const used = prev.flowers - pt.flowers;
       const mini = pt.mini - prev.mini;
 
       if (prev.isSwap) {
-        // 換花後第一點：只算小花增量和時間，消耗用換花後帶入的花數減本點
         if (mini > 0 && mins > 0 && used > 0) {
           const pf = mini/used, pm = mini/mins;
           usedCell = used; miniCell = mini.toLocaleString();
@@ -1676,7 +2016,7 @@ function renderFlowerPoints() {
     const tr = document.createElement('tr');
     tr.style.cssText = rowStyle;
     tr.innerHTML = `
-      <td style="font-family:monospace;color:${pt.isSwap?'var(--accent2)':'var(--accent2)'}">${pt.time}${pt.isSwap?' 🔄':''}</td>
+      <td style="font-family:monospace;color:var(--accent2)">${pt.time}${pt.isSwap?' 🔄':''}</td>
       <td>${pt.flowers}</td>
       <td style="color:var(--accent)">${pt.mini.toLocaleString()}</td>
       <td style="color:var(--text2)">${pt.pikmin}</td>
@@ -1707,9 +2047,9 @@ function saveFlowerSession() {
   let totalUsed=0, totalMini=0, totalMins=0, segCount=0, sumPF=0, sumPM=0;
   for (let i = 1; i < flowerPoints.length; i++) {
     const prev=flowerPoints[i-1], cur=flowerPoints[i];
-    if (cur.isSwap) continue; // 換花點本身不計算段落
+    if (cur.isSwap) continue;
     const [ph,pm2]=prev.time.split(':').map(Number);
-    const [ch,cm] =cur.time.split(':').map(Number);
+    const [ch,cm]=cur.time.split(':').map(Number);
     let mins=(ch*60+cm)-(ph*60+pm2); if(mins<0)mins+=24*60;
     const used=prev.flowers-cur.flowers, mini=cur.mini-prev.mini;
     if(used>0&&mini>0&&mins>0){totalUsed+=used;totalMini+=mini;totalMins+=mins;sumPF+=mini/used;sumPM+=mini/mins;segCount++;}
@@ -1754,9 +2094,9 @@ function renderFlowerHistory() {
 }
 
 function calcFlowerPredict() {
-  const pikmin    = +document.getElementById('fl-pred-pikmin').value;
-  const miniNow   = +document.getElementById('fl-pred-miniflowers').value;
-  const target    = +document.getElementById('fl-target').value || 15000;
+  const pikmin = +document.getElementById('fl-pred-pikmin').value;
+  const miniNow = +document.getElementById('fl-pred-miniflowers').value;
+  const target = +document.getElementById('fl-target').value || 15000;
   const startTime = document.getElementById('fl-predict-start').value;
   if (!pikmin) { alert('請填入皮克敏數量'); return; }
   const history = getFlowerHistory();
@@ -1771,15 +2111,15 @@ function calcFlowerPredict() {
       : `📋 來源：歷史紀錄（${matched[0].date}，${pikmin} 隻）`;
   } else {
     params = state.flowerParams[state.currentAccount] || {};
-    srcLabel = `📋 來源：當前儲存參數`;
+    srcLabel = '📋 來源：當前儲存參數';
   }
   if (!params.perFlower || !params.perMinute) {
     alert(`找不到皮克敏數 ${pikmin} 的參數紀錄，請先在 Step 1 登錄相同皮克敏數的資料。`); return;
   }
   const perFlower = params.perFlower, perMinute = params.perMinute;
-  const miniNeeded    = Math.max(0, target - miniNow);
+  const miniNeeded = Math.max(0, target - miniNow);
   const flowersNeeded = perFlower > 0 ? Math.ceil(miniNeeded / perFlower) : 0;
-  const minsNeeded    = perMinute > 0 ? Math.ceil(miniNeeded / perMinute) : 0;
+  const minsNeeded = perMinute > 0 ? Math.ceil(miniNeeded / perMinute) : 0;
   const h = Math.floor(minsNeeded/60), m = minsNeeded%60;
   const timeStr = minsNeeded===0 ? '已達標 🎉' : h>0 ? `${h} 小時 ${m} 分鐘` : `${m} 分鐘`;
   const stat = (label, val, color) =>
@@ -1813,8 +2153,7 @@ function calcEndTime(startTime, addMins) {
 renderAccounts();
 renderEssence();
 checkDefaultBtn();
-
-// Date display
+renderCategoryDatalist();
 document.getElementById('todayDate') && (document.getElementById('todayDate').textContent = getTodayKey());
 </script>
 </body>
