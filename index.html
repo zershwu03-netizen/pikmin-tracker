@@ -561,9 +561,9 @@
 
 <!-- ══════ 1. 精華計算 ══════ -->
 <div class="section active" id="tab-essence">
-  <!-- 凍結標題列 -->
+  <!-- 凍結標題列（只到新增花種按鈕） -->
   <div id="essenceStickyBar" style="position:sticky;top:0;z-index:80;background:var(--bg);padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:16px">
-  <div class="section-header" style="margin-bottom:12px;padding-top:16px">
+  <div class="section-header" style="margin-bottom:0;padding-top:16px">
     <div class="section-title">✨ 精華計算器</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn-secondary" onclick="openCopyFrom()" title="從其他帳號複製花種清單">📋 從其他帳號複製</button>
@@ -574,9 +574,10 @@
       <button class="btn-primary" onclick="addEssenceRow()">＋ 新增花種</button>
     </div>
   </div>
+  </div><!-- /essenceStickyBar -->
 
   <!-- 全域上限參數 -->
-  <div class="card" style="margin-bottom:0;background:var(--surface2)">
+  <div class="card" style="margin-bottom:16px;background:var(--surface2)">
     <div class="card-title" style="margin-bottom:10px"><span class="icon">⚙️</span>全域上限參數（新增花種預設值）</div>
     <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
       <div class="form-group">
@@ -592,8 +593,6 @@
       </div>
     </div>
   </div>
-
-  </div><!-- /essenceStickyBar -->
 
   <div class="legend" style="margin-top:16px">
     <div class="legend-item"><div class="legend-dot" style="background:#1c2333;border:1px solid #30363d"></div>手動輸入</div>
