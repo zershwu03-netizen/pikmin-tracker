@@ -1125,6 +1125,14 @@ function autoResetDailyFields(today) {
   const lim = window.state.dailyLimits || { mushCount: 3, raidCount: 1, sensorCount: 1 };
   window.state.accounts.forEach(function(acct) {
     if (!window.state.dailyRecords[acct]) window.state.dailyRecords[acct] = {};
+    // 跨日前先存當天菇點快照（排除已打）
+    const yesterday = Object.keys(window.state.dailyRecords[acct]).sort().reverse().find(d => d !== today);
+    if (yesterday && window.state.dailyRecords[acct][yesterday]) {
+      const snapCount = window.state.mushrooms.filter(function(m) {
+        return m.acct === acct && m.expireAt > Date.now() && !m.manualArchived;
+      }).length;
+      window.state.dailyRecords[acct][yesterday].mushSnap = snapCount;
+    }
     if (window.state.dailyRecords[acct][today]) return;
     const allDates = Object.keys(window.state.dailyRecords[acct]).sort();
     const lastDate = allDates.length > 0 ? allDates[allDates.length-1] : null;
@@ -1989,8 +1997,18 @@ function renderDailyOverview() {
         : coins > 0 ? span(coins, 'var(--accent3)') : '—';
       const ls = (r.levelStage1 !== undefined ? r.levelStage1 : r.levelStage) || '';
       const ms = (r.monthlyStage1 !== undefined ? r.monthlyStage1 : r.monthlyStage) || '';
-      const myMush = state.mushrooms.filter(function(m) { return m.acct === acct && m.expireAt > Date.now(); });
-      const mushStr = myMush.length > 0 ? span('🍄' + myMush.length, 'var(--accent3)') : '—';
+      const today = getTodayKey();
+      // 卡菇：今天即時抓（排除已打），過去用快照
+      let mushStr;
+      if (d === today) {
+        const liveMush = state.mushrooms.filter(function(m) {
+          return m.acct === acct && m.expireAt > Date.now() && !m.manualArchived;
+        });
+        mushStr = liveMush.length > 0 ? span('🍄' + liveMush.length, 'var(--accent3)') : '—';
+      } else {
+        const snap = r.mushSnap !== undefined ? r.mushSnap : null;
+        mushStr = snap !== null ? (snap > 0 ? span('🍄' + snap, 'var(--accent3)') : '—') : '—';
+      }
       rowParts.push(
         '<tr>' +
           '<td rowspan="2" style="font-weight:800;color:var(--accent2);white-space:nowrap">' + acct + '</td>' +
