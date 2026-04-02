@@ -477,7 +477,7 @@
     renderCategoryDatalist();
     const td = document.getElementById('todayDate');
     if (td) td.textContent = getTodayKey();
-    // 啟動時主動為所有帳號建立今天的紀錄（若還沒有）
+    // 啟動時為所有帳號建立今日紀錄（若還沒有）
     autoResetDailyFields(getTodayKey());
     // 初始化儲存按鈕狀態
     if (typeof markGlobalDirty === 'function') markGlobalDirty(false);
@@ -496,6 +496,8 @@
       if (dsb) dsb.style.top = (hh + abh + nth) + 'px';
       var esb = document.getElementById('essenceStickyBar');
       if (esb) esb.style.top = (hh + abh + nth) + 'px';
+      var msb = document.getElementById('mushroomStickyBar');
+      if (msb) msb.style.top = (hh + abh + nth) + 'px';
     }
   }).catch(e => {
     console.error('Firebase load error', e);
@@ -665,16 +667,18 @@
 
 <!-- ══════ 3. 菇點紀錄 ══════ -->
 <div class="section" id="tab-mushroom">
-  <div class="section-header">
-    <div class="section-title">🍄 菇點紀錄</div>
+  <!-- 凍結標題列 -->
+  <div id="mushroomStickyBar" style="position:sticky;top:0;z-index:80;background:var(--bg);padding-bottom:0">
+    <div style="padding:16px 0 8px 0">
+      <div class="section-title">🍄 菇點紀錄</div>
+    </div>
+    <div class="tabs-inner" id="mushModeTabs" style="margin-bottom:0;padding-bottom:12px;border-bottom:1px solid var(--border)">
+      <div class="tab-inner active" id="mushModeAccountTab" onclick="setMushMode('account')">👤 帳號卡菇</div>
+      <div class="tab-inner" id="mushModeResetTab" onclick="setMushMode('reset')">🕓 無人卡</div>
+      <div class="tab-inner" id="mushModeHistoryTab" onclick="setMushMode('history')">📦 歷史重置菇點</div>
+    </div>
   </div>
-
-  <!-- 登錄模式 tabs -->
-  <div class="tabs-inner" id="mushModeTabs">
-    <div class="tab-inner active" id="mushModeAccountTab" onclick="setMushMode('account')">👤 帳號卡菇</div>
-    <div class="tab-inner" id="mushModeResetTab" onclick="setMushMode('reset')">🕓 無人卡</div>
-    <div class="tab-inner" id="mushModeHistoryTab" onclick="setMushMode('history')">📦 歷史重置菇點</div>
-  </div>
+  <div style="padding-top:16px">
 
   <!-- 帳號卡菇模式 -->
   <div id="mushPanelAccount">
@@ -752,15 +756,15 @@
   <!-- 歷史重置菇點模式（只顯示列表） -->
   <div id="mushPanelHistory" style="display:none">
     <div style="font-size:0.85rem;color:var(--text2);margin-bottom:12px;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
-      📦 顯示所有已重置菇點。若同一座標被登錄 2 次以上，自動標記為「活躍菇點」。
+      📦 顯示所有已重置菇點。若同一座標登錄 2 次以上且類別含「大」或「巨大」，標記為「活躍菇點」。
     </div>
   </div>
 
   <!-- 活躍菇點 -->
   <div id="mushSectionActive" style="margin-bottom:20px">
-    <div style="font-size:0.85rem;font-weight:800;color:var(--text2);margin-bottom:10px">🍄 活躍菇點</div>
+    <div style="font-size:0.85rem;font-weight:800;color:var(--text2);margin-bottom:10px">🍄 現行菇點</div>
     <div class="mushroom-list" id="mushroomList">
-      <div class="empty-state">尚無活躍菇點 🍄</div>
+      <div class="empty-state">尚無現行菇點 🍄</div>
     </div>
   </div>
 
@@ -770,10 +774,9 @@
       <div style="font-size:0.85rem;font-weight:800;color:var(--text3)">📦 已重置菇點 <span id="archiveCount"></span></div>
     </div>
     <div class="mushroom-list" id="mushroomArchiveList"></div>
-  </div>
-</div>
-
-<!-- 菇點編輯 Modal -->
+  </div><!-- /mushroom archive -->
+  </div><!-- /padding-top wrapper -->
+</div><!-- /tab-mushroom -->
 <div class="modal-overlay" id="mushroomEditModal">
   <div class="modal" style="min-width:320px">
     <h3>✏️ 編輯菇點</h3>
@@ -1042,6 +1045,7 @@ function ensureStateFields(s) {
   if (!s.mushCategories)     s.mushCategories     = getDefaultCategories();
   if (!s.globalEssenceLimit) s.globalEssenceLimit = 250;
   if (!s.globalFlowerLimit)  s.globalFlowerLimit  = 400;
+  if (!s.acctEssenceLimits)  s.acctEssenceLimits  = {}; // 各帳號獨立精華上限
   return s;
 }
 
@@ -1105,17 +1109,14 @@ function dailySaveToCloud() { globalSaveToCloud(); }
 window.ensureStateFields = ensureStateFields;
 
 // ─── Clock ────────────────────────────────────────────────
-let _lastCheckedDate = (function() {
-  const now = new Date();
-  return new Date(now.getTime() + 8 * 3600000).toISOString().slice(0, 10);
-})();
+// ─── Clock ────────────────────────────────────────────────
+let _lastCheckedDate = getTodayKey();
 
 function updateClock() {
   const now = new Date();
   document.getElementById('clock').textContent = now.toLocaleString('zh-TW');
   updateMushroomTimers();
-
-  // 偵測跨日：凌晨 00:00 自動重置每日欄位
+  // 跨日偵測（台灣時間）
   const today = getTodayKey();
   if (today !== _lastCheckedDate) {
     _lastCheckedDate = today;
@@ -1128,35 +1129,23 @@ function autoResetDailyFields(today) {
   const lim = window.state.dailyLimits || { mushCount: 3, raidCount: 1, sensorCount: 1 };
   window.state.accounts.forEach(function(acct) {
     if (!window.state.dailyRecords[acct]) window.state.dailyRecords[acct] = {};
-    // 今天已有紀錄就不覆蓋（避免重複觸發）
-    if (window.state.dailyRecords[acct][today]) return;
-    // 繼承前一天的非重置欄位
+    if (window.state.dailyRecords[acct][today]) return; // 已有今日資料，不覆蓋
     const allDates = Object.keys(window.state.dailyRecords[acct]).sort();
-    const lastDate = allDates.length > 0 ? allDates[allDates.length - 1] : null;
+    const lastDate = allDates.length > 0 ? allDates[allDates.length-1] : null;
     const prev = (lastDate && lastDate !== today) ? window.state.dailyRecords[acct][lastDate] : {};
     window.state.dailyRecords[acct][today] = {
-      // ── 每日重置 ──
       mushCount:    lim.mushCount   !== undefined ? lim.mushCount   : 3,
       raidCount:    lim.raidCount   !== undefined ? lim.raidCount   : 1,
       sensorCount:  lim.sensorCount !== undefined ? lim.sensorCount : 1,
-      flowerCoins:  0,
-      flowerDone:   false,
-      // ── 繼承前一天 ──
-      essenceWhite:  prev.essenceWhite  || 0,
-      essenceYellow: prev.essenceYellow || 0,
-      essenceRed:    prev.essenceRed    || 0,
-      essenceBlue:   prev.essenceBlue   || 0,
-      flowerWhite:   prev.flowerWhite   || 0,
-      flowerYellow:  prev.flowerYellow  || 0,
-      flowerRed:     prev.flowerRed     || 0,
-      flowerBlue:    prev.flowerBlue    || 0,
-      levelStage1:   prev.levelStage1   || '',
-      monthlyStage1: prev.monthlyStage1 || '',
+      flowerCoins: 0, flowerDone: false,
+      essenceWhite:  prev.essenceWhite  || 0, essenceYellow: prev.essenceYellow || 0,
+      essenceRed:    prev.essenceRed    || 0, essenceBlue:   prev.essenceBlue   || 0,
+      flowerWhite:   prev.flowerWhite   || 0, flowerYellow:  prev.flowerYellow  || 0,
+      flowerRed:     prev.flowerRed     || 0, flowerBlue:    prev.flowerBlue    || 0,
+      levelStage1:   prev.levelStage1   || '', monthlyStage1: prev.monthlyStage1 || '',
     };
   });
-  // 存到雲端
   if (window._fbSave) window._fbSave(window.state);
-  // 更新畫面
   const td = document.getElementById('todayDate');
   if (td) td.textContent = today;
   if (window._appReady) {
@@ -1164,7 +1153,6 @@ function autoResetDailyFields(today) {
     if (typeof renderDailyOverview === 'function' && typeof dailyTab !== 'undefined' && dailyTab === 'overview') renderDailyOverview();
   }
 }
-
 setInterval(updateClock, 1000);
 updateClock();
 
@@ -1325,39 +1313,48 @@ function confirmAddAccount() {
   save(); closeModal(); renderAccounts(); switchTab(getCurrentTab());
 }
 
-// ─── Global Limits ────────────────────────────────────────
+// ─── Global Limits（各帳號獨立）─────────────────────────
+function getAcctLimits() {
+  if (!state.acctEssenceLimits) state.acctEssenceLimits = {};
+  if (!state.acctEssenceLimits[state.currentAccount]) {
+    state.acctEssenceLimits[state.currentAccount] = {
+      essenceLimit: state.globalEssenceLimit || 250,
+      flowerLimit:  state.globalFlowerLimit  || 400
+    };
+  }
+  return state.acctEssenceLimits[state.currentAccount];
+}
+
 function saveGlobalLimits() {
   const newELim = +document.getElementById('globalEssenceLimit').value || 250;
   const newFLim = +document.getElementById('globalFlowerLimit').value || 400;
-  const oldELim = state.globalEssenceLimit || 250;
-  const oldFLim = state.globalFlowerLimit || 400;
-  state.globalEssenceLimit = newELim;
-  state.globalFlowerLimit  = newFLim;
-  // 連動更新所有花種：只改「還沒手動改過的」（等於舊預設值的）
+  const lim    = getAcctLimits();
+  const oldELim = lim.essenceLimit;
+  const oldFLim = lim.flowerLimit;
+  lim.essenceLimit = newELim;
+  lim.flowerLimit  = newFLim;
+  // 連動更新此帳號花種中仍等於舊預設值的欄位
   const rows = getEssenceRows();
   rows.forEach(function(row) {
     if (row.essenceLimit === oldELim) row.essenceLimit = newELim;
     if (row.flowerLimit  === oldFLim) row.flowerLimit  = newFLim;
   });
-  save();
-  renderEssence();
+  save(); renderEssence();
 }
 
 // ─── 1. Essence Calculator ────────────────────────────────
 function getEssenceRows() {
   if (!state.essenceRows[state.currentAccount]) {
-    state.essenceRows[state.currentAccount] = [
-      { name: '紅色雪花蓮', essenceHave: 281, essenceLimit: 250, flowerLimit: 400, flowerHave: 320 },
-      { name: '黃色金魚草', essenceHave: 262, essenceLimit: 250, flowerLimit: 400, flowerHave: 390 },
-    ];
+    state.essenceRows[state.currentAccount] = [];
   }
   return state.essenceRows[state.currentAccount];
 }
 
 function renderEssence() {
-  // sync global limit inputs
-  document.getElementById('globalEssenceLimit').value = state.globalEssenceLimit || 250;
-  document.getElementById('globalFlowerLimit').value = state.globalFlowerLimit || 400;
+  // 讀取此帳號的精華上限參數
+  const lim = getAcctLimits();
+  document.getElementById('globalEssenceLimit').value = lim.essenceLimit;
+  document.getElementById('globalFlowerLimit').value  = lim.flowerLimit;
 
   const rows = getEssenceRows();
   const tbody = document.getElementById('essenceBody');
@@ -1368,7 +1365,7 @@ function renderEssence() {
     const needConsume = essenceNeed - flowerCanCollect;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><input class="cell-input" value="${row.name}" onchange="updateEssenceRow(${i},'name',this.value)" style="min-width:100px"></td>
+      <td><input class="cell-input essence-name" value="${row.name}" onchange="updateEssenceRow(${i},'name',this.value)" style="min-width:100px" data-row="${i}"></td>
       <td class="cell-white"><input class="cell-input essence-numpad" type="number" placeholder="0" data-row="${i}" data-field="essenceHave"
         value="${row.essenceHave}" style="min-width:80px;text-align:center"></td>
       <td class="cell-white"><input class="cell-input essence-numpad" type="number" placeholder="0" data-row="${i}" data-field="flowerHave"
@@ -1410,27 +1407,25 @@ function _essenceWriteVal(el) {
   }
 }
 
-// focus：記住原值並清空，方便直接輸入
 document.addEventListener('focus', function(e) {
   var el = e.target;
-  if (!el.classList.contains('essence-numpad') && !el.classList.contains('daily-numpad')) return;
+  if (!el.classList.contains('essence-numpad') && !el.classList.contains('daily-numpad') && !el.classList.contains('essence-name')) return;
   el._prevVal = el.value;
-  el.value = '';
+  if (!el.classList.contains('essence-name')) el.value = '';
 }, true);
 
-// blur：若空白則還原，否則寫值存檔
 document.addEventListener('blur', function(e) {
   var el = e.target;
   if (el.classList.contains('essence-numpad')) {
-    if (el.value === '' || el.value === null) {
-      el.value = el._prevVal || 0;
-    }
+    if (el.value === '' || el.value === null) el.value = el._prevVal || 0;
     _essenceWriteVal(el);
     saveLocal();
+  } else if (el.classList.contains('essence-name')) {
+    var i = parseInt(el.dataset.row, 10);
+    if (!isNaN(i)) getEssenceRows()[i].name = el.value;
+    saveLocal();
   } else if (el.classList.contains('daily-numpad')) {
-    if (el.value === '' || el.value === null) {
-      el.value = el._prevVal || 0;
-    }
+    if (el.value === '' || el.value === null) el.value = el._prevVal || 0;
     saveDailyNumpadSilent(el);
   }
 }, true);
@@ -1438,24 +1433,45 @@ document.addEventListener('blur', function(e) {
 // Enter / Tab 跳格：同時監聽 keydown + keyup 確保 Android 輸入法也能捕捉
 function _essenceJumpNext(el) {
   _essenceWriteVal(el);
-  var all = Array.from(document.querySelectorAll('.essence-numpad'));
-  var idx = all.indexOf(el);
+  // 跳格順序：所有名稱 → 所有精華多 → 所有花有（逐欄，而非逐行）
+  const names   = Array.from(document.querySelectorAll('.essence-name'));
+  const ehaves  = Array.from(document.querySelectorAll('.essence-numpad[data-field="essenceHave"]'));
+  const fhaves  = Array.from(document.querySelectorAll('.essence-numpad[data-field="flowerHave"]'));
+  const order   = [...names, ...ehaves, ...fhaves];
+  const idx     = order.indexOf(el);
   if (idx === -1) return;
-  var next = all[(idx + 1) % all.length];
+  const next = order[(idx + 1) % order.length];
   setTimeout(function() { next.focus(); next.select(); }, 0);
 }
 document.addEventListener('keydown', function(e) {
   if (e.key !== 'Enter' && e.key !== 'Tab') return;
   var el = e.target;
-  if (!el.classList.contains('essence-numpad')) return;
-  e.preventDefault();
-  e.stopPropagation();
-  _essenceJumpNext(el);
+  if (el.classList.contains('essence-numpad') || el.classList.contains('essence-name')) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (el.classList.contains('essence-name')) {
+      // 名稱欄：儲存後跳下一個
+      var i = parseInt(el.dataset.row, 10);
+      if (!isNaN(i)) getEssenceRows()[i].name = el.value;
+      // 跳格走同樣邏輯
+      const names  = Array.from(document.querySelectorAll('.essence-name'));
+      const ehaves = Array.from(document.querySelectorAll('.essence-numpad[data-field="essenceHave"]'));
+      const fhaves = Array.from(document.querySelectorAll('.essence-numpad[data-field="flowerHave"]'));
+      const order  = [...names, ...ehaves, ...fhaves];
+      const idx    = order.indexOf(el);
+      if (idx !== -1) {
+        const next = order[(idx + 1) % order.length];
+        setTimeout(function() { next.focus(); next.select(); }, 0);
+      }
+    } else {
+      _essenceJumpNext(el);
+    }
+  }
 }, true);
 document.addEventListener('keyup', function(e) {
   if (e.key !== 'Enter') return;
   var el = e.target;
-  if (!el.classList.contains('essence-numpad')) return;
+  if (!el.classList.contains('essence-numpad') && !el.classList.contains('essence-name')) return;
   e.preventDefault();
   e.stopPropagation();
 }, true);
@@ -1467,8 +1483,9 @@ function updateEssenceRow(i, key, val) {
 }
 
 function addEssenceRow() {
-  const elim = +document.getElementById('globalEssenceLimit').value || state.globalEssenceLimit || 250;
-  const flim = +document.getElementById('globalFlowerLimit').value || state.globalFlowerLimit || 400;
+  const lim  = getAcctLimits();
+  const elim = +document.getElementById('globalEssenceLimit').value || lim.essenceLimit || 250;
+  const flim = +document.getElementById('globalFlowerLimit').value  || lim.flowerLimit  || 400;
   getEssenceRows().push({ name: '新花種', essenceHave: 0, essenceLimit: elim, flowerLimit: flim, flowerHave: 0 });
   save(); renderEssence();
 }
@@ -1584,10 +1601,8 @@ function checkDefaultBtn() {
 
 // ─── 2. Daily Records ─────────────────────────────────────
 function getTodayKey() {
-  // 使用台灣時間（UTC+8）而非 UTC
-  const now = new Date();
-  const twTime = new Date(now.getTime() + 8 * 3600000);
-  return twTime.toISOString().slice(0, 10);
+  // 使用台灣時間 UTC+8
+  return new Date(Date.now() + 8*3600000).toISOString().slice(0,10);
 }
 
 function getDailyRecord() {
@@ -1606,7 +1621,7 @@ function getDailyRecord() {
       raidCount:  lim.raidCount  !== undefined ? lim.raidCount  : 1,
       sensorCount:lim.sensorCount!== undefined ? lim.sensorCount: 1,
       flowerCoins: 0,
-      flowerDone: false,
+      flowerDone: null,
       // 保留不重置（從前一天繼承）
       essenceWhite:  prev.essenceWhite  || 0,
       essenceYellow: prev.essenceYellow || 0,
@@ -1863,13 +1878,15 @@ document.addEventListener('keyup', function(e) {
 }, true);
 
 
-// Android IME Enter 有時以 insertLineBreak inputType 觸發 input 事件
 document.addEventListener('input', function(e) {
   if (e.inputType !== 'insertLineBreak' && e.inputType !== 'insertParagraph') return;
   var el = e.target;
   if (el.classList.contains('essence-numpad')) {
     e.preventDefault();
     el.value = el.value.replace(/[^0-9]/g, '');
+    _essenceJumpNext(el);
+  } else if (el.classList.contains('essence-name')) {
+    e.preventDefault();
     _essenceJumpNext(el);
   } else if (el.classList.contains('daily-numpad')) {
     e.preventDefault();
@@ -2304,71 +2321,107 @@ function saveMushroomEdit() {
 
 // Detect "active spots": coordinates that appear 2+ times in archived mushrooms
 function getActiveSpotCoords() {
-  const archived = state.mushrooms.filter(m => m.expireAt <= Date.now());
+  // 同座標 2 次以上 且 類別含「大」或「巨大」才標為活躍菇點
+  const allArchived = state.mushrooms.filter(m => m.expireAt <= Date.now() || m.manualArchived);
   const countMap = {};
-  archived.forEach(m => {
-    const key = m.coord?.trim();
-    if (!key) return;
-    countMap[key] = (countMap[key] || 0) + 1;
+  allArchived.forEach(m => {
+    const key = (m.coord || '').trim();
+    if (key) countMap[key] = (countMap[key] || 0) + 1;
   });
-  return new Set(Object.entries(countMap).filter(([,cnt]) => cnt >= 2).map(([k]) => k));
+  const result = new Set();
+  Object.entries(countMap).forEach(([coord, cnt]) => {
+    if (cnt < 2) return;
+    const hasLarge = allArchived.some(m =>
+      (m.coord || '').trim() === coord &&
+      m.category && (m.category.includes('大') || m.category.includes('巨大'))
+    );
+    if (hasLarge) result.add(coord);
+  });
+  return result;
+}
+
+// 類別排序 index（數字越小排越前，找不到排最後）
+function getCatOrder(cat) {
+  const idx = (state.mushCategories || []).indexOf(cat || '');
+  return idx === -1 ? 9999 : idx;
+}
+
+// 二/三：「已打」勾選 → 移入歷史；取消 → 回現行（時間繼續計）
+function toggleManualArchive(id) {
+  const m = state.mushrooms.find(x => x.id === id);
+  if (!m) return;
+  m.manualArchived = !m.manualArchived;
+  save(); renderMushrooms();
 }
 
 function renderMushrooms() {
   updateMushroomAccountSelect();
   const now = Date.now();
-  const active = state.mushrooms.filter(m => m.expireAt > now);
-  const archived = state.mushrooms.filter(m => m.expireAt <= now);
+
+  // 現行：時間未到 且 未手動已打
+  const active   = state.mushrooms.filter(m => m.expireAt > now && !m.manualArchived);
+  // 歷史：時間已到 or 手動已打
+  const archived = state.mushrooms.filter(m => m.expireAt <= now || m.manualArchived);
   const activeSpotCoords = getActiveSpotCoords();
 
   document.getElementById('archiveCount').textContent = archived.length > 0 ? `(${archived.length})` : '';
 
   const makeCard = (m, isArchived) => {
     const remaining = m.expireAt - now;
-    const expired = remaining <= 0;
-    const d = Math.floor(remaining / 86400000);
-    const h = Math.floor((remaining % 86400000) / 3600000);
-    const min = Math.floor((remaining % 3600000) / 60000);
-    const timerStr = expired ? '已重置' : `${d>0?d+'天':''}${h}時${min}分`;
-    const isNoAcct = m.resetMode || m.acct === '（無人卡）';
+    const expired   = remaining <= 0;
+    const d   = Math.floor(remaining / 86400000);
+    const h   = Math.floor((remaining % 86400000) / 3600000);
+    const mn  = Math.floor((remaining % 3600000) / 60000);
+
+    let timerStr;
+    if (m.manualArchived && !expired)
+      timerStr = `已打（${d>0?d+'天':''}${h}時${mn}分）`;
+    else if (expired)
+      timerStr = '已重置';
+    else
+      timerStr = `${d>0?d+'天':''}${h}時${mn}分`;
+
+    const isNoAcct  = m.resetMode || m.acct === '（無人卡）';
     const acctColor = isNoAcct ? 'var(--text3)' : 'var(--accent2)';
     const acctLabel = isNoAcct ? '🕓 無人卡' : `👤 ${m.acct}`;
 
-    // Expire time display
     let expireLabel;
     if (m.twExpireTime) {
-      // reset mode: show local 04:00 + TW time
-      const localH = (4 + 24) % 24;
       expireLabel = `到期：當地 04:00 / ${m.twExpireTime}`;
     } else {
-      const expireTW = new Date(m.expireAt + 8*3600000);
-      expireLabel = `${isArchived?'重置於':'到期：'}${String(expireTW.getUTCHours()).padStart(2,'0')}:${String(expireTW.getUTCMinutes()).padStart(2,'0')} TW`;
+      const tw = new Date(m.expireAt + 8*3600000);
+      const hh = String(tw.getUTCHours()).padStart(2,'0');
+      const mm = String(tw.getUTCMinutes()).padStart(2,'0');
+      expireLabel = `${isArchived?'封存於':'到期：'}${hh}:${mm} TW`;
     }
 
-    const isActiveSpot = activeSpotCoords.has(m.coord?.trim());
-    const activeSpotBadge = isActiveSpot ? `<span class="active-spot-badge">🔥 活躍菇點</span>` : '';
-    const categoryBadge = m.category ? `<span class="mush-category-badge">${m.category}</span>` : '';
+    const isActiveSpot  = activeSpotCoords.has((m.coord||'').trim());
+    const activeSpotBadge = isActiveSpot
+      ? `<span class="active-spot-badge">🔥 活躍菇點</span>` : '';
+    const categoryBadge = m.category
+      ? `<span class="mush-category-badge">${m.category}</span>` : '';
+    const cardClass = `mushroom-item${isActiveSpot?' is-active-spot':''}`;
+    const bgStyle   = isArchived ? 'opacity:0.75;background:#1a1a1a' : '';
+    const coordSafe = (m.coord||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
 
-    const cardClass = `mushroom-item${isActiveSpot ? ' is-active-spot' : ''}`;
-
-    return `<div class="${cardClass}" style="${isArchived?'opacity:0.7;background:#1a1a1a':''}">
+    return `<div class="${cardClass}" style="${bgStyle}">
       <div>
-        <div class="mushroom-coord" onclick="copyCoord('${(m.coord||'').replace(/'/g,"\\'")}')" title="點擊複製座標">
-          ${m.coord || '—'}
-          <span class="copy-hint">📋 複製</span>
+        <div class="mushroom-coord" onclick="copyCoord('${coordSafe}')" title="點擊複製座標">
+          ${m.coord||'—'}<span class="copy-hint">📋 複製</span>
         </div>
-        <div style="font-weight:700;margin-top:2px">${m.name || '—'}</div>
-        <div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">
-          ${categoryBadge}
-          ${activeSpotBadge}
-        </div>
+        <div style="font-weight:700;margin-top:2px">${m.name||'—'}</div>
+        <div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">${categoryBadge}${activeSpotBadge}</div>
         <div class="mushroom-acct" style="color:${acctColor};margin-top:4px">${acctLabel}</div>
+        <label style="display:flex;align-items:center;gap:5px;margin-top:7px;cursor:pointer;font-size:0.8rem;font-weight:700;color:${m.manualArchived?'var(--accent)':'var(--text2)'}">
+          <input type="checkbox" ${m.manualArchived?'checked':''} onchange="toggleManualArchive(${m.id})" style="width:15px;height:15px;accent-color:var(--accent)">
+          已打
+        </label>
       </div>
       <div>
-        <div style="font-size:0.75rem;color:var(--text3);margin-bottom:2px">${isArchived?'已重置':'剩餘時間'}</div>
-        <div class="mushroom-timer ${expired?'expired':''}">${timerStr}</div>
+        <div style="font-size:0.75rem;color:var(--text3);margin-bottom:2px">${isArchived?'已封存':'剩餘時間'}</div>
+        <div class="mushroom-timer ${(expired&&!m.manualArchived)?'expired':''}">${timerStr}</div>
         <div style="font-size:0.72rem;color:var(--text3);margin-top:3px">${expireLabel}</div>
-        ${m.localTime ? `<div style="font-size:0.7rem;color:var(--text3);margin-top:2px">當地登錄：${m.localTime}（時差+${m.tzOffset||0}h）</div>` : ''}
+        ${m.localTime?`<div style="font-size:0.7rem;color:var(--text3);margin-top:2px">當地登錄：${m.localTime}（時差+${m.tzOffset||0}h）</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;gap:4px">
         <button class="btn-counter" style="width:auto;padding:0 10px;font-size:0.78rem;color:var(--accent2)" onclick="openMushroomEdit(${m.id})">✏️</button>
@@ -2377,18 +2430,27 @@ function renderMushrooms() {
     </div>`;
   };
 
+  // 現行排序：一 類別順序  二 剩餘時間少→多
   const activeList = document.getElementById('mushroomList');
   if (active.length === 0) {
-    activeList.innerHTML = '<div class="empty-state">尚無活躍菇點 🍄</div>';
+    activeList.innerHTML = '<div class="empty-state">尚無現行菇點 🍄</div>';
   } else {
-    activeList.innerHTML = active.sort((a,b) => a.expireAt - b.expireAt).map(m => makeCard(m, false)).join('');
+    activeList.innerHTML = active.slice().sort((a, b) => {
+      const cd = getCatOrder(a.category) - getCatOrder(b.category);
+      return cd !== 0 ? cd : a.expireAt - b.expireAt;
+    }).map(m => makeCard(m, false)).join('');
   }
 
+  // 歷史排序：一 類別順序  二 座標字串
   const archiveList = document.getElementById('mushroomArchiveList');
   if (archived.length === 0) {
     archiveList.innerHTML = '<div class="empty-state">無封存菇點</div>';
   } else {
-    archiveList.innerHTML = archived.sort((a,b) => b.expireAt - a.expireAt).map(m => makeCard(m, true)).join('');
+    archiveList.innerHTML = archived.slice().sort((a, b) => {
+      const cd = getCatOrder(a.category) - getCatOrder(b.category);
+      if (cd !== 0) return cd;
+      return (a.coord||'').localeCompare(b.coord||'');
+    }).map(m => makeCard(m, true)).join('');
   }
 }
 
@@ -2401,8 +2463,7 @@ function updateMushroomTimers() {
 function renderCategoryDatalist() {
   const dl = document.getElementById('categoryList');
   if (!dl) return;
-  const cats = state.mushCategories || [];
-  dl.innerHTML = cats.map(c => `<option value="${c}">`).join('');
+  dl.innerHTML = (state.mushCategories || []).map(c => `<option value="${c}">`).join('');
 }
 
 function openCategoryManager() {
@@ -2414,17 +2475,34 @@ function openCategoryManager() {
 function closeCategoryManager() {
   document.getElementById('categoryModal').classList.remove('open');
   renderCategoryDatalist();
+  renderMushrooms(); // 類別排序改了，同步重排菇點
 }
 
+// 一：類別可拖曳排序
+let _catDragFrom = null;
 function renderCategoryListEdit() {
   const el = document.getElementById('categoryListEdit');
   const cats = state.mushCategories || [];
   el.innerHTML = cats.map((c, i) => `
-    <div style="display:flex;align-items:center;gap:8px">
+    <div draggable="true"
+      style="display:flex;align-items:center;gap:8px;padding:3px 0;border-top:2px solid transparent"
+      ondragstart="_catDragFrom=${i};event.dataTransfer.effectAllowed='move'"
+      ondragover="event.preventDefault();this.style.borderTopColor='var(--accent2)'"
+      ondragleave="this.style.borderTopColor='transparent'"
+      ondrop="event.preventDefault();this.style.borderTopColor='transparent';catDrop(${i})">
+      <span style="cursor:grab;color:var(--text3);padding:0 4px" title="拖曳排序">⠿</span>
       <input class="cell-input" value="${c}" style="flex:1" onchange="updateCategory(${i},this.value)">
       <button class="btn-del" onclick="deleteCategory(${i})">×</button>
-    </div>
-  `).join('');
+    </div>`).join('');
+}
+
+function catDrop(toIdx) {
+  if (_catDragFrom === null || _catDragFrom === toIdx) return;
+  const cats = state.mushCategories;
+  const [moved] = cats.splice(_catDragFrom, 1);
+  cats.splice(toIdx, 0, moved);
+  _catDragFrom = null;
+  save(); renderCategoryListEdit();
 }
 
 function addCategory() {
@@ -2438,15 +2516,11 @@ function addCategory() {
   renderCategoryListEdit();
 }
 
-function updateCategory(i, val) {
-  state.mushCategories[i] = val;
-  save();
-}
+function updateCategory(i, val) { state.mushCategories[i] = val; save(); }
 
 function deleteCategory(i) {
   state.mushCategories.splice(i, 1);
-  save();
-  renderCategoryListEdit();
+  save(); renderCategoryListEdit();
 }
 
 // ─── 4. Flower Calculator ─────────────────────────────────
@@ -2459,7 +2533,10 @@ function getFlowerHistory() {
 
 function renderFlower() {
   const params = state.flowerParams[state.currentAccount] || {};
-  if (params.pikmin) document.getElementById('fl-pikmin').value = params.pikmin;
+  const pikmEl = document.getElementById('fl-pikmin');
+  pikmEl.value = params.pikmin || '';
+  // 切換帳號時清除暫存打點 session（各帳號有各自歷史）
+  flowerPoints = [];
   renderFlowerPoints();
   renderFlowerHistory();
 }
